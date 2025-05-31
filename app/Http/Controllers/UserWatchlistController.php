@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+namespace App\Http\Controllers;
+
 use Illuminate\Http\Request;
 use League\Csv\Reader;
 use App\Models\UserWatchlistItem;
+use Illuminate\Support\Facades\Log;
 
 class UserWatchlistController extends Controller
 {
@@ -14,25 +17,26 @@ class UserWatchlistController extends Controller
             'csv_file' => 'required|file|mimes:csv,txt',
         ]);
 
-        $path = $request->file('csv_file')->store('uploads');
+        // Зберігаємо файл у public disk (тобто storage/app/public/uploads)
+        $path = $request->file('csv_file')->store('uploads', 'public');
+        Log::info('Файл збережено за шляхом: ' . $path);
 
-        $csv = Reader::createFromPath(storage_path("app/{$path}"), 'r');
+        // Використовуємо storage_path з префіксом "app/public"
+        $csv = Reader::createFromPath(storage_path("app/public/{$path}"), 'r');
+        $csv->setDelimiter(';');
         $csv->setHeaderOffset(0);
 
-        $user = $request->user(); // або auth()->user()
+        $user = $request->user();
 
         foreach ($csv->getRecords() as $record) {
-            $user->watchlistItems()->create([
-                'title' => $record['title'],
-                'max_price_usd' => (float)$record['max_price_usd'] * 100,
-                'min_float' => $record['min_float'] ?: null,
-                'max_float' => $record['max_float'] ?: null,
-                'phase' => $record['phase'] ?: null,
-                'paint_seed' => $record['paint_seed'] ?: null,
-            ]);
+            $user->watchlistItems()->updateOrCreate(
+                ['item_id' => $record['id']],
+                ['title' => $record['title']]
+            );
         }
 
-        return back()->with('success', 'CSV імпортовано!');
+        return response()->json(['message' => 'Імпорт завершено успішно.']);
     }
 }
+
 

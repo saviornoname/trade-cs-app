@@ -18,6 +18,7 @@ return new class extends Migration
             $table->unsignedBigInteger('max_price_usd')->nullable(); // $14.00 → 1400
             $table->decimal('min_float', 6, 5)->nullable();
             $table->decimal('max_float', 6, 5)->nullable();
+            $table->string('item_id')->nullable();
             $table->string('phase')->nullable();
             $table->string('paint_seed')->nullable();
             $table->boolean('active')->default(true);
