@@ -216,7 +216,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div class="p-4 text-sm">
+    <div class="p-4 text-sm w-full max-w-full sm:max-w-[80%] mx-auto">
         <div class="flex flex-wrap gap-2 mb-4 items-center">
             <input v-model="filters.title" placeholder="Назва" class="border px-2 py-1 rounded" />
             <select v-model="filters.phase" class="border px-2 py-1 rounded">
