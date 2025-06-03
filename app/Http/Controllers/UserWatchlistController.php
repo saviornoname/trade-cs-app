@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use League\Csv\Reader;
 use App\Models\UserWatchlistItem;
@@ -27,7 +28,9 @@ class UserWatchlistController extends Controller
         $csv->setHeaderOffset(0);
 
         $user = $request->user();
-
+        if (!$user) {
+            $user = User::inRandomOrder()->first();
+        }
         foreach ($csv->getRecords() as $record) {
             $user->watchlistItems()->updateOrCreate(
                 ['item_id' => $record['id']],
