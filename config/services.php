@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'dmarket' => [
+        'public_key' => env('DMARKET_PUBLIC_KEY'),
+        'secret_key' => env('DMARKET_SECRET_KEY'),
+    ],
+
 ];
