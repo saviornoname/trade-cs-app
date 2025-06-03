@@ -89,6 +89,13 @@ const fetchAllMarkets = async () => {
     }
 };
 
+const clearFilters = () => {
+    filters.title = '';
+    filters.phase = '';
+    filters.floatPartValue = '';
+    filters.paintSeed = '';
+};
+
 const extractFilterOptions = () => {
     const phases = new Set<string>();
     const floats = new Set<string>();
@@ -238,7 +245,11 @@ onUnmounted(() => {
                 🔁 Запустити оновлення
             </button>
         </div>
-
+        <div class="flex flex-wrap gap-2 mb-4 items-center">
+        <button @click="clearFilters" class="border px-2 py-1 rounded">
+            🧹 Очистити фільтри
+        </button>
+        </div>
         <div class="mb-2 text-sm text-gray-700 dark:text-gray-300">
             ⏳ Оновлення через: {{ timeLeft }} сек
         </div>
