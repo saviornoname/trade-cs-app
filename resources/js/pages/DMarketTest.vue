@@ -81,16 +81,16 @@ const fetchMarketForTarget = async (title: string) => {
 };
 
 const fetchBuffPriceForTarget = async (target: any) => {
+    const floatPartValue = getAttr(target, 'floatPartValue');
     try {
-        const floatPartValue = getAttr(target, 'floatPartValue');
         const res = await axios.get(route('api.buff.buy-orders'), {
             params: { title: target.Title, float_part_value: floatPartValue },
         });
         const first = res.data?.data?.items?.[0];
-        buffPrices[target.Title] = first ? parseInt(first.price) : null;
+        buffPrices[target.Title + "" + floatPartValue] = first ? parseInt(first.price) : null;
     } catch (e) {
         console.error(`Помилка BUFF для ${target.Title}`, e);
-        buffPrices[target.Title] = null;
+        buffPrices[target.Title + "" + floatPartValue] = null;
     }
 };
 
@@ -278,7 +278,6 @@ onUnmounted(() => {
             ⏳ Оновлення через: {{ timeLeft }} сек
         </div>
         <div v-if="loading" class="text-center py-4">Завантаження...</div>
-
         <div v-for="(entry, index) in targetsWithOrders" :key="`${entry.target.Title}-${entry.target.Price.Amount}-${index}`">
             <div class="flex items-center justify-between mb-2">
                 <div>
