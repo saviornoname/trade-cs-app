@@ -9,4 +9,8 @@ Route::middleware('auth:sanctum')->prefix('dmarket')->group(function () {
     Route::post('/targets', [DMarketController::class, 'createTarget']);
     Route::get('/compare', [DMarketController::class, 'compareWithBuff']);
 });
-Route::get('/buff-test', [BuffApiController::class, 'index']);
+Route::middleware('auth:sanctum')->prefix('api')->group(function () {
+    Route::get('/buff-test', [BuffApiController::class, 'index']);
+    Route::get('/buff/buy-orders', [BuffApiController::class, 'buyOrders'])
+        ->name('api.buff.buy-orders');
+});

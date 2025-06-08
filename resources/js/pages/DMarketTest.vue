@@ -12,6 +12,7 @@ let countdownIntervalId: ReturnType<typeof setInterval> | null = null;
 
 const userTargets = ref<any>(null);
 const marketDataByTarget = reactive<Record<string, any[]>>({});
+const buffPrices = reactive<Record<string, number | null>>({});
 const filters = reactive({ phase: '', floatPartValue: '', paintSeed: '', title: '' });
 const availablePhases = ref<string[]>([]);
 const availableFloatValues = ref<string[]>([]);
@@ -21,7 +22,7 @@ const sortKey = ref('price');
 const sortAsc = ref(false);
 
 const gameIdInput = ref('a8db');
-const orderLimit = ref(100);
+const orderLimit = ref(1);
 
 const getAttr = (target: any, name: string) => {
     const attr = target.Attributes?.find((a: any) => a.Name === name);
@@ -41,6 +42,7 @@ const manualRefresh = async () => {
     try {
         await fetchUserTargets();
         await fetchAllMarkets();
+        await fetchAllBuffPrices();
         startRefreshInterval();
         restartCountdown();
     } finally {
@@ -76,6 +78,25 @@ const fetchMarketForTarget = async (title: string) => {
         console.error(`Помилка при отриманні ринку для ${title}`, e);
         marketDataByTarget[title] = [];
     }
+};
+
+const fetchBuffPriceForTarget = async (target: any) => {
+    try {
+        const floatPartValue = getAttr(target, 'floatPartValue');
+        const res = await axios.get(route('api.buff.buy-orders'), {
+            params: { title: target.Title, float_part_value: floatPartValue },
+        });
+        const first = res.data?.data?.items?.[0];
+        buffPrices[target.Title] = first ? parseInt(first.price) : null;
+    } catch (e) {
+        console.error(`Помилка BUFF для ${target.Title}`, e);
+        buffPrices[target.Title] = null;
+    }
+};
+
+const fetchAllBuffPrices = async () => {
+    if (!userTargets.value?.Items) return;
+    await Promise.all(userTargets.value.Items.map((t: any) => fetchBuffPriceForTarget(t)));
 };
 
 const fetchAllMarkets = async () => {
@@ -140,6 +161,7 @@ const startRefreshInterval = () => {
         if (autoRefresh.value) {
             await fetchUserTargets();
             await fetchAllMarkets();
+            await fetchAllBuffPrices();
             timeLeft.value = refreshIntervalInput.value;
         }
     }, getRefreshIntervalMs());
@@ -196,6 +218,7 @@ const targetsWithOrders = computed(() => {
                 target,
                 userPriceFormatted: (target.Price.Amount).toFixed(2),
                 orders: limitedOrders,
+                buffPrice: buffPrices[target.Title] ?? null,
             };
         })
         .filter(Boolean);
@@ -205,6 +228,7 @@ onMounted(async () => {
     initTheme();
     await fetchUserTargets();
     await fetchAllMarkets();
+    await fetchAllBuffPrices();
     restartCountdown();
     startRefreshInterval();
 });
@@ -246,9 +270,9 @@ onUnmounted(() => {
             </button>
         </div>
         <div class="flex flex-wrap gap-2 mb-4 items-center">
-        <button @click="clearFilters" class="border px-2 py-1 rounded">
-            🧹 Очистити фільтри
-        </button>
+            <button @click="clearFilters" class="border px-2 py-1 rounded">
+                🧹 Очистити фільтри
+            </button>
         </div>
         <div class="mb-2 text-sm text-gray-700 dark:text-gray-300">
             ⏳ Оновлення через: {{ timeLeft }} сек
@@ -267,6 +291,9 @@ onUnmounted(() => {
                 </div>
                 <div class="text-right text-sm">
                     🎯 Ваш ордер: <span class="font-bold">{{ entry.userPriceFormatted }} $</span>
+                    <div v-if="entry.buffPrice !== null" class="text-right text-sm">
+                        BUFF: {{ (entry.buffPrice ).toFixed(2) }} ¥ || {{ (entry.buffPrice * 0.14).toFixed(2) }} $
+                    </div>
                 </div>
             </div>
 

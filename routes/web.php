@@ -34,10 +34,9 @@ Route::post('/dmarket/targets', [DMarketController::class, 'createTarget'])->nam
 Route::get('/dmarket/json-view', function () {
     return Inertia::render('DMarketJsonView');
 })->name('dmarket.json');
-Route::get('/buff-test', function () {
-    return Inertia::render('BuffTest');
-})->name('buff.index');
-//});
+
+
+Route::get('/buff/buy-orders', [BuffApiController::class, 'buyOrders'])->name('api.buff.buy-orders');;
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';

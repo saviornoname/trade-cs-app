@@ -24,7 +24,7 @@ class DMarketService
 
     protected function buildSignedHeaders(string $method, string $route, string $body = ''): array
     {
-        $timestamp = (string) time();
+        $timestamp = (string)time();
         $message = $method . $route . $body . $timestamp;
 
         $signature = sodium_bin2hex(
@@ -41,12 +41,13 @@ class DMarketService
     }
 
     protected function sendRequest(
-        string $method,
-        string $routeForUrl,
-        array $query = [],
-        array $body = [],
+        string  $method,
+        string  $routeForUrl,
+        array   $query = [],
+        array   $body = [],
         ?string $routeForSign = null
-    ): ?array {
+    ): ?array
+    {
         $url = $this->buildUrl($routeForUrl);
         $bodyJson = empty($body) ? '' : json_encode($body, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 
@@ -97,9 +98,12 @@ class DMarketService
     }
 
 
-    public function getUserTargets(string $status = 'TargetStatusActive'): ?array
+//    public function getUserTargets(string $status = 'TargetStatusActive'): ?array
+    public function getUserTargets(string $status = 'TargetStatusInactive'): ?array
     {
-        $query = ['BasicFilters.Status' => $status];
+        $query = [
+            'BasicFilters.Status' => $status,
+        ];
         return $this->sendRequest('GET', '/marketplace-api/v1/user-targets', $query);
     }
 
