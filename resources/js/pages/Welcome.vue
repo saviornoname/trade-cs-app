@@ -57,7 +57,23 @@ import {  Link } from '@inertiajs/vue3'
                             :href="route('dmarket.index')"
                             class="text-[#f53003] underline underline-offset-4 dark:text-[#FF4433] hover:text-red-700"
                         >
-                            ➤ Api test
+                            ➤ Api test (Dmarket)
+                        </Link>
+                    </li>
+                    <li>
+                        <Link
+                            :href="route('dmarket.json')"
+                            class="text-[#f53003] underline underline-offset-4 dark:text-[#FF4433] hover:text-red-700"
+                        >
+                            ➤ Api test (Dmarket, my orders)
+                        </Link>
+                    </li>
+                    <li>
+                        <Link
+                            :href="route('buff.index')"
+                            class="text-[#f53003] underline underline-offset-4 dark:text-[#FF4433] hover:text-red-700"
+                        >
+                            ➤ Api test (Buff)
                         </Link>
                     </li>
 <!--                    <li>-->

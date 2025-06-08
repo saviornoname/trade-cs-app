@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BuffApiController;
 use App\Http\Controllers\DMarketController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -33,6 +34,9 @@ Route::post('/dmarket/targets', [DMarketController::class, 'createTarget'])->nam
 Route::get('/dmarket/json-view', function () {
     return Inertia::render('DMarketJsonView');
 })->name('dmarket.json');
+Route::get('/buff-test', function () {
+    return Inertia::render('BuffTest');
+})->name('buff.index');
 //});
 
 require __DIR__ . '/settings.php';
