@@ -103,6 +103,7 @@ class DMarketService
     {
         $query = [
             'BasicFilters.Status' => $status,
+            'Limit' => 2,
         ];
         return $this->sendRequest('GET', '/marketplace-api/v1/user-targets', $query);
     }

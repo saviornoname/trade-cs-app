@@ -37,6 +37,8 @@ Route::get('/dmarket/json-view', function () {
 
 
 Route::get('/buff/buy-orders', [BuffApiController::class, 'buyOrders'])->name('api.buff.buy-orders');;
+Route::get('/buff/sell-orders', [BuffApiController::class, 'sellOrders'])
+    ->name('api.buff.sell-orders');
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';

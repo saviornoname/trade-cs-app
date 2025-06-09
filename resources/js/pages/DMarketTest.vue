@@ -23,6 +23,7 @@ const sortAsc = ref(false);
 
 const gameIdInput = ref('a8db');
 const orderLimit = ref(1);
+const buffCookie = ref(localStorage.getItem('buffCookie') || '');
 
 const getAttr = (target: any, name: string) => {
     const attr = target.Attributes?.find((a: any) => a.Name === name);
@@ -82,9 +83,11 @@ const fetchMarketForTarget = async (title: string) => {
 
 const fetchBuffPriceForTarget = async (target: any) => {
     const floatPartValue = getAttr(target, 'floatPartValue');
+    const phase = getAttr(target, 'phase');
     try {
-        const res = await axios.get(route('api.buff.buy-orders'), {
-            params: { title: target.Title, float_part_value: floatPartValue },
+        const res = await axios.get(route('api.buff.sell-orders'), {
+            params: { title: target.Title, float_part_value: floatPartValue, phase },
+            headers: { 'Buff-Cookie': buffCookie.value },
         });
         const first = res.data?.data?.items?.[0];
         buffPrices[target.Title + "" + floatPartValue] = first ? parseInt(first.price) : null;
@@ -169,6 +172,9 @@ const startRefreshInterval = () => {
 watch(refreshIntervalInput, () => {
     startRefreshInterval();
     restartCountdown();
+});
+watch(buffCookie, () => {
+    localStorage.setItem('buffCookie', buffCookie.value);
 });
 
 const targetsWithOrders = computed(() => {

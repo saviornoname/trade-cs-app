@@ -47,14 +47,58 @@ class BuffApiController extends Controller
 
         $range = $this->getPaintwearRange($floatPartValue);
 
+        $cookie = $request->header('Buff-Cookie');
+
         $response = $buffApiService->getBuyOrders(
             $item->item_id,
             $range['min'],
-            $range['max']
+            $range['max'],
+            $cookie
         );
 
         return response()->json($response);
     }
+
+    public function sellOrders(Request $request, BuffApiService $buffApiService)
+    {
+        $title = $request->input('title');
+        $floatPartValue = $request->input('float_part_value');
+        $phase = $request->input('phase');
+
+        if (!$title) {
+            return response()->json(['error' => 'Title is required.'], 422);
+        }
+
+        $item = UserWatchlistItem::where('title', $title)->first();
+        if (!$item) {
+            return response()->json(['error' => 'Item not found.'], 404);
+        }
+
+        $range = $this->getPaintwearRange($floatPartValue);
+
+        $cookie = $request->header('Buff-Cookie');
+
+        $response = $buffApiService->getSellOrders(
+            $item->item_id,
+            $range['min'],
+            $range['max'],
+            $cookie
+        );
+
+        if (isset($response['data']['items']) && $phase) {
+            $response['data']['items'] = array_values(array_filter(
+                $response['data']['items'],
+                fn ($i) => ($i['asset_info']['info']['phase_data']['name'] ?? null) === $phase
+            ));
+        }
+
+        if (isset($response['data']['items'])) {
+            usort($response['data']['items'], fn ($a, $b) => floatval($a['price']) <=> floatval($b['price']));
+        }
+
+        return response()->json($response);
+    }
+
 
     private function getPaintwearRange(?string $floatPartValue): array
     {
