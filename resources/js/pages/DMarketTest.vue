@@ -98,7 +98,6 @@ const fetchAllBuffPrices = async () => {
     if (!userTargets.value?.Items) return;
     await Promise.all(userTargets.value.Items.map((t: any) => fetchBuffPriceForTarget(t)));
 };
-
 const fetchAllMarkets = async () => {
     if (!userTargets.value?.Items) return;
     loading.value = true;
