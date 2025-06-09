@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\ApiCredentialController;
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -18,4 +19,6 @@ Route::middleware('auth')->group(function () {
     Route::get('settings/appearance', function () {
         return Inertia::render('settings/Appearance');
     })->name('appearance');
+    Route::get('settings/api-credentials', [ApiCredentialController::class, 'edit'])->name('api-credentials.edit');
+    Route::patch('settings/api-credentials', [ApiCredentialController::class, 'update'])->name('api-credentials.update');
 });

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ApiCredential;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -13,8 +14,9 @@ class DMarketService
 
     public function __construct()
     {
-        $this->publicKey = config('services.dmarket.public_key');
-        $this->secretKey = config('services.dmarket.secret_key');
+        $cred = ApiCredential::first();
+        $this->publicKey = $cred->dmarket_public_key ?? config('services.dmarket.public_key');
+        $this->secretKey = $cred->dmarket_secret_key ?? config('services.dmarket.secret_key');
     }
 
     protected function buildUrl(string $endpoint): string

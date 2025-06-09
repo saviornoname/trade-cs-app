@@ -4,15 +4,16 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use App\Models\ApiCredential;
 
 class BuffApiService
 {
     private function httpGet(string $url, array $params, ?string $cookie = null)
     {
         sleep(random_int(2, 15));
-
+        $cred = ApiCredential::first();
         $client = Http::withHeaders([
-            'Cookie' => $cookie ?? env('BUFF_COOKIE'),
+            'Cookie' => $cookie ?? ($cred->buff_cookie ?? env('BUFF_COOKIE')),
         ]);
 
         return $client->get($url, $params);

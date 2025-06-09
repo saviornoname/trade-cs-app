@@ -29,6 +29,8 @@ Route::get('/watchlist/items', [UserWatchlistController::class, 'index'])
     ->name('watchlist.items');
 Route::patch('/watchlist/items/{item}', [UserWatchlistController::class, 'toggleActive'])
     ->name('watchlist.toggle');
+Route::post('/watchlist/deactivate-all', [UserWatchlistController::class, 'deactivateAll'])->name('watchlist.deactivateAll');
+Route::post('/watchlist/activate-all', [UserWatchlistController::class, 'activateAll'])->name('watchlist.activateAll');
 
 Route::get('/watchlist', function () {
     return Inertia::render('WatchlistOrders');

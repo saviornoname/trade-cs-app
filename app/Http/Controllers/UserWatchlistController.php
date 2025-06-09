@@ -38,16 +38,21 @@ class UserWatchlistController extends Controller
         if (!$user) {
             $user = User::inRandomOrder()->first();
         }
+        $importedIds = [];
+
         foreach ($csv->getRecords() as $record) {
-            $user->watchlistItems()->updateOrCreate(
+            $item = $user->watchlistItems()->updateOrCreate(
                 ['item_id' => $record['id']],
                 [
                     'title' => $record['title'],
                     'active' => true,
                 ]
-
             );
+            $importedIds[] = $item->id;
         }
+
+        // Deactivate items not present in file
+        $user->watchlistItems()->whereNotIn('id', $importedIds)->update(['active' => false]);
 
         return response()->json(['message' => 'Імпорт завершено успішно.']);
     }
@@ -58,6 +63,22 @@ class UserWatchlistController extends Controller
         $item->save();
 
         return response()->json(['active' => $item->active]);
+    }
+
+    public function deactivateAll(Request $request)
+    {
+        $user = $request->user() ?: User::first();
+        $user->watchlistItems()->update(['active' => false]);
+
+        return response()->json(['status' => 'ok']);
+    }
+
+    public function activateAll(Request $request)
+    {
+        $user = $request->user() ?: User::first();
+        $user->watchlistItems()->update(['active' => true]);
+
+        return response()->json(['status' => 'ok']);
     }
 }
 

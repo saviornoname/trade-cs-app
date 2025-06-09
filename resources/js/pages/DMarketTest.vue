@@ -135,15 +135,6 @@ const extractFilterOptions = () => {
     availablePaintSeeds.value = Array.from(seeds).sort((a, b) => +a - +b);
 };
 
-const toggleSort = (key: string) => {
-    if (sortKey.value === key) {
-        sortAsc.value = !sortAsc.value;
-    } else {
-        sortKey.value = key;
-        sortAsc.value = true;
-    }
-};
-
 const getRefreshIntervalMs = () => refreshIntervalInput.value * 1000;
 
 const restartCountdown = () => {
