@@ -87,7 +87,6 @@ const fetchBuffPriceForTarget = async (target: any) => {
     try {
         const res = await axios.get(route('api.buff.sell-orders'), {
             params: { title: target.Title, float_part_value: floatPartValue, phase },
-            headers: { 'Buff-Cookie': buffCookie.value },
         });
         const first = res.data?.data?.items?.[0];
         buffPrices[target.Title + "" + floatPartValue] = first ? parseInt(first.price) : null;
@@ -223,7 +222,7 @@ const targetsWithOrders = computed(() => {
                 target,
                 userPriceFormatted: (target.Price.Amount).toFixed(2),
                 orders: limitedOrders,
-                buffPrice: buffPrices[target.Title] ?? null,
+                buffPrice: buffPrices[target.Title + getAttr(target, 'floatPartValue')] ?? null,
             };
         })
         .filter(Boolean);
@@ -301,31 +300,31 @@ onUnmounted(() => {
                 </div>
             </div>
 
-            <table class="w-full text-sm border">
-                <thead>
-                <tr class="bg-gray-200 dark:bg-gray-700">
-                    <th class="px-2 py-1 text-left cursor-pointer" @click="toggleSort('price')">Ціна (центи)</th>
-                    <th class="px-2 py-1 text-left">Float</th>
-                    <th class="px-2 py-1 text-left">Фаза</th>
-                    <th class="px-2 py-1 text-left">Seed</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr
-                    v-for="order in entry.orders"
-                    :key="order.id"
-                    class="border-b"
-                    :class="{
-                            'bg-green-100 dark:bg-green-900': parseInt(order.price) === Math.round(entry.target.Price.Amount * 100)
-                        }"
-                >
-                    <td class="px-2 py-1 border">{{ (parseInt(order.price) / 100).toFixed(2) }}</td>
-                    <td class="px-2 py-1 border">{{ order.attributes?.floatPartValue }}</td>
-                    <td class="px-2 py-1 border">{{ order.attributes?.phase }}</td>
-                    <td class="px-2 py-1 border">{{ order.attributes?.paintSeed }}</td>
-                </tr>
-                </tbody>
-            </table>
+<!--            <table class="w-full text-sm border">-->
+<!--                <thead>-->
+<!--                <tr class="bg-gray-200 dark:bg-gray-700">-->
+<!--                    <th class="px-2 py-1 text-left cursor-pointer" @click="toggleSort('price')">Ціна (центи)</th>-->
+<!--                    <th class="px-2 py-1 text-left">Float</th>-->
+<!--                    <th class="px-2 py-1 text-left">Фаза</th>-->
+<!--                    <th class="px-2 py-1 text-left">Seed</th>-->
+<!--                </tr>-->
+<!--                </thead>-->
+<!--                <tbody>-->
+<!--                <tr-->
+<!--                    v-for="order in entry.orders"-->
+<!--                    :key="order.id"-->
+<!--                    class="border-b"-->
+<!--                    :class="{-->
+<!--                            'bg-green-100 dark:bg-green-900': parseInt(order.price) === Math.round(entry.target.Price.Amount * 100)-->
+<!--                        }"-->
+<!--                >-->
+<!--                    <td class="px-2 py-1 border">{{ (parseInt(order.price) / 100).toFixed(2) }}</td>-->
+<!--                    <td class="px-2 py-1 border">{{ order.attributes?.floatPartValue }}</td>-->
+<!--                    <td class="px-2 py-1 border">{{ order.attributes?.phase }}</td>-->
+<!--                    <td class="px-2 py-1 border">{{ order.attributes?.paintSeed }}</td>-->
+<!--                </tr>-->
+<!--                </tbody>-->
+<!--            </table>-->
         </div>
     </div>
 </template>
