@@ -3,10 +3,10 @@ import {  Link } from '@inertiajs/vue3'
 </script>
 
 <template>
-<!--    <Head title="Welcome">-->
-<!--        <link rel="preconnect" href="https://rsms.me/" />-->
-<!--        <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />-->
-<!--    </Head>-->
+    <Head title="Welcome">
+        <link rel="preconnect" href="https://rsms.me/" />
+        <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+    </Head>
 
     <div class="flex min-h-screen flex-col items-center bg-[#FDFDFC] p-6 text-[#1b1b18] dark:bg-[#0a0a0a] lg:justify-center lg:p-8">
         <header class="mb-6 w-full max-w-[335px] text-sm lg:max-w-4xl">
@@ -66,14 +66,6 @@ import {  Link } from '@inertiajs/vue3'
                             class="text-[#f53003] underline underline-offset-4 dark:text-[#FF4433] hover:text-red-700"
                         >
                             ➤ Api test (Dmarket, my orders)
-                        </Link>
-                    </li>
-                    <li>
-                        <Link
-                            :href="route('buff.index')"
-                            class="text-[#f53003] underline underline-offset-4 dark:text-[#FF4433] hover:text-red-700"
-                        >
-                            ➤ Api test (Buff)
                         </Link>
                     </li>
 <!--                    <li>-->

@@ -12,6 +12,13 @@ use Illuminate\Support\Facades\Log;
 
 class UserWatchlistController extends Controller
 {
+    public function index(Request $request)
+    {
+        $user = $request->user() ?: User::first();
+
+        return response()->json($user->watchlistItems()->get());
+    }
+
     public function import(Request $request)
     {
         $request->validate([
@@ -34,11 +41,23 @@ class UserWatchlistController extends Controller
         foreach ($csv->getRecords() as $record) {
             $user->watchlistItems()->updateOrCreate(
                 ['item_id' => $record['id']],
-                ['title' => $record['title']]
+                [
+                    'title' => $record['title'],
+                    'active' => true,
+                ]
+
             );
         }
 
         return response()->json(['message' => 'Імпорт завершено успішно.']);
+    }
+    public function toggleActive(Request $request, UserWatchlistItem $item)
+    {
+        $item->active = !$item->active;
+
+        $item->save();
+
+        return response()->json(['active' => $item->active]);
     }
 }
 
