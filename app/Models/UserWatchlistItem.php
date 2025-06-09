@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\User;
 class UserWatchlistItem extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'title',
         'max_price_usd',
