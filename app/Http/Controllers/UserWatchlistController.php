@@ -2,13 +2,11 @@
 
 namespace App\Http\Controllers;
 
-namespace App\Http\Controllers;
-
+use App\Models\UserWatchlistItem;
 use App\Models\User;
 use Illuminate\Http\Request;
-use League\Csv\Reader;
-use App\Models\UserWatchlistItem;
 use Illuminate\Support\Facades\Log;
+use League\Csv\Reader;
 
 class UserWatchlistController extends Controller
 {
