@@ -52,37 +52,68 @@ class DMarketController extends Controller
 
         $result = [];
 
-        foreach ($targets['Items'] ?? [] as $target) {
-            $title = $target['Title'] ?? '';
-            $floatPartValue = $this->getAttr($target, 'floatPartValue');
-            $phase = $this->getAttr($target, 'phase');
+        if (!empty($targets['Items'])) {
+            foreach ($targets['Items'] as $target) {
+                $title = $target['Title'] ?? '';
+                $floatPartValue = $this->getAttr($target, 'floatPartValue');
+                $phase = $this->getAttr($target, 'phase');
 
-            $watchItem = UserWatchlistItem::where('title', $title)->first();
-            if (!$watchItem || !$watchItem->item_id) {
-                continue;
+                $watchItem = UserWatchlistItem::where('title', $title)->first();
+                if (!$watchItem || !$watchItem->item_id) {
+                    continue;
+                }
+
+                $range = $this->getPaintwearRange($floatPartValue);
+                $buffData = $buff->getSellOrders($watchItem->item_id, $range['min'], $range['max']);
+
+                $orders = $buffData['data']['items'] ?? [];
+                if ($phase) {
+                    $orders = array_values(array_filter($orders, fn ($o) => ($o['asset_info']['info']['phase_data']['name'] ?? null) === $phase));
+                }
+
+                if ($orders) {
+                    usort($orders, fn ($a, $b) => floatval($a['price']) <=> floatval($b['price']));
+                    $buffPrice = $orders[0]['price'];
+                } else {
+                    $buffPrice = null;
+                }
+
+                $result[] = [
+                    'title' => $title,
+                    'phase' => $phase,
+                    'float' => $floatPartValue,
+                    'dmarket_price_usd' => $target['Price']['Amount'] ?? null,
+                    'best_buff_price_cny' => $buffPrice,
+                ];
             }
 
-            $range = $this->getPaintwearRange($floatPartValue);
-            $buffData = $buff->getSellOrders($watchItem->item_id, $range['min'], $range['max']);
+            return response()->json($result);
+        }
 
-            $orders = $buffData['data']['items'] ?? [];
-            if ($phase) {
-                $orders = array_values(array_filter($orders, fn ($o) => ($o['asset_info']['info']['phase_data']['name'] ?? null) === $phase));
-            }
+        $watchItems = UserWatchlistItem::where('active', true)->get();
 
-            if ($orders) {
-                usort($orders, fn ($a, $b) => floatval($a['price']) <=> floatval($b['price']));
-                $buffPrice = $orders[0]['price'];
-            } else {
-                $buffPrice = null;
-            }
+        foreach ($watchItems as $item) {
+            $dmData = $dmarket->getMarketItems([
+                'gameId' => 'a8db',
+                'title' => $item->title,
+                'currency' => 'USD',
+                'limit' => 1,
+                'orderBy' => 'price',
+                'orderDir' => 'asc',
+            ]);
+
+            $obj = $dmData['objects'][0] ?? null;
+
+            $dmPrice = $obj['price']['USD'] ?? null;
+            $phase = $obj['extra']['phase'] ?? null;
+            $float = $obj['extra']['floatPartValue'] ?? null;
 
             $result[] = [
-                'title' => $title,
+                'title' => $item->title,
                 'phase' => $phase,
-                'float' => $floatPartValue,
-                'dmarket_price_usd' => $target['Price']['Amount'] ?? null,
-                'best_buff_price_cny' => $buffPrice,
+                'float' => $float,
+                'dmarket_price_usd' => $dmPrice,
+                'buff_target_price_usd' => $item->max_price_usd ? $item->max_price_usd / 100 : null,
             ];
         }
 
@@ -98,6 +129,7 @@ class DMarketController extends Controller
         }
         return null;
     }
+
 
     private function getPaintwearRange(?string $floatPartValue): array
     {

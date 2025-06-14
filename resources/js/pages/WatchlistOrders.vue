@@ -152,22 +152,22 @@ const submit = async () => {
 
         <table class="w-full border text-sm">
             <thead class="bg-gray-300 text-gray-900 dark:bg-gray-700 dark:text-gray-100">
-                <tr>
-                    <th class="border px-2 py-1">Title</th>
-                    <th class="border px-2 py-1">Phase</th>
-                    <th class="border px-2 py-1">Float</th>
-                    <th class="border px-2 py-1">DMarket $</th>
-                    <th class="border px-2 py-1">Buff ¥</th>
-                </tr>
+            <tr>
+                <th class="border px-2 py-1">Title</th>
+                <th class="border px-2 py-1">Phase</th>
+                <th class="border px-2 py-1">Float</th>
+                <th class="border px-2 py-1">DMarket $</th>
+                <th class="border px-2 py-1">Buff Target $</th>
+            </tr>
             </thead>
             <tbody>
-                <tr v-for="c in comparisons" :key="c.title + c.float + c.phase" class="border-t">
-                    <td class="border px-2 py-1">{{ c.title }}</td>
-                    <td class="border px-2 py-1">{{ c.phase || '/' }}</td>
-                    <td class="border px-2 py-1">{{ c.float || '/' }}</td>
-                    <td class="border px-2 py-1 text-right">{{ c.dmarket_price_usd ?? '-' }}</td>
-                    <td class="border px-2 py-1 text-right">{{ c.best_buff_price_cny ?? '-' }}</td>
-                </tr>
+            <tr v-for="c in comparisons" :key="c.title + c.float + c.phase" class="border-t">
+                <td class="border px-2 py-1">{{ c.title }}</td>
+                <td class="border px-2 py-1">{{ c.phase || '/' }}</td>
+                <td class="border px-2 py-1">{{ c.float || '/' }}</td>
+                <td class="border px-2 py-1 text-right">{{ c.dmarket_price_usd ?? '-' }}</td>
+                <td class="border px-2 py-1 text-right">{{ c.buff_target_price_usd ?? c.best_buff_price_cny ?? '-' }}</td>
+            </tr>
             </tbody>
         </table>
     </div>
