@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import axios from 'axios';
-import { computed, onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { route } from 'ziggy-js';
 
 interface WatchItem {
@@ -42,7 +42,7 @@ const toggleActive = async (item: WatchItem) => {
 
 
 
-watch([currentPage, search, activeOnly], ([newPage, newSearch, newActive], [oldPage, oldSearch, oldActive]) => {
+watch([currentPage, search, activeOnly], ([, newSearch, newActive], [, oldSearch, oldActive]) => {
     if (newSearch !== oldSearch || newActive !== oldActive) {
         currentPage.value = 1;
     }
@@ -154,14 +154,25 @@ const submit = async () => {
             <thead class="bg-gray-300 text-gray-900 dark:bg-gray-700 dark:text-gray-100">
             <tr>
                 <th class="border px-2 py-1">Title</th>
-                <th class="border px-2 py-1">Market Min $</th>
+                <th class="border px-2 py-1">Float</th>
+                <th class="border px-2 py-1">Seed</th>
+                <th class="border px-2 py-1">Phase</th>
+                <th class="border px-2 py-1">Market Min $ (3)</th>
                 <th class="border px-2 py-1">Target Max $</th>
             </tr>
             </thead>
             <tbody>
-            <tr v-for="c in comparisons" :key="c.title" class="border-t">
+            <tr v-for="c in comparisons" :key="c.title + c.floatPartValue + c.paintSeed + c.phase" class="border-t">
                 <td class="border px-2 py-1">{{ c.title }}</td>
-                <td class="border px-2 py-1 text-right">{{ c.market_min_price_usd ?? '-' }}</td>
+                <td class="border px-2 py-1 text-right">{{ c.floatPartValue }}</td>
+                <td class="border px-2 py-1 text-right">{{ c.paintSeed }}</td>
+                <td class="border px-2 py-1 text-right">{{ c.phase }}</td>
+                <td class="border px-2 py-1 text-right">
+                    <span v-if="Array.isArray(c.market_min_prices_usd) && c.market_min_prices_usd.length">
+                        {{ c.market_min_prices_usd.join(', ') }}
+                    </span>
+                    <span v-else>-</span>
+                </td>
                 <td class="border px-2 py-1 text-right">{{ c.target_max_price_usd ?? '-' }}</td>
             </tr>
             </tbody>

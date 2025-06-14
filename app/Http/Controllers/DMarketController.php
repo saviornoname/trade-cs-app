@@ -128,45 +128,79 @@ class DMarketController extends Controller
         foreach ($watchItems as $item) {
             $targetsData = $dmarket->getMarketTargets('a8db', $item->title);
             $orders = $targetsData['orders'] ?? [];
-            $maxTarget = null;
+            $groups = [];
+
             foreach ($orders as $order) {
-                if (isset($order['price'])) {
-                    $price = intval($order['price']) / 100;
-                    if ($maxTarget === null || $price > $maxTarget) {
-                        $maxTarget = $price;
-                    }
+                if (!isset($order['price'])) {
+                    continue;
+                }
+
+                $float = $order['attributes']['floatPartValue'] ?? 'any';
+                $seed = $order['attributes']['paintSeed'] ?? 'any';
+                $phase = $order['attributes']['phase'] ?? 'any';
+
+                $price = intval($order['price']) / 100;
+                $key = $float . '|' . $seed . '|' . $phase;
+
+                if (!isset($groups[$key]) || $price > $groups[$key]['target_max_price_usd']) {
+                    $groups[$key] = [
+                        'floatPartValue' => $float,
+                        'paintSeed' => $seed,
+                        'phase' => $phase,
+                        'target_max_price_usd' => $price,
+                    ];
                 }
             }
-//            dd($orders);
-            $marketData = $dmarket->getMarketItems([
-                'gameId' => 'a8db',
-                'title' => $item->title,
-                'currency' => 'USD',
-                'limit' => 1,
-                'orderBy' => 'price',
-                'orderDir' => 'asc',
-            ]);
 
-            $obj = $marketData['objects'][0] ?? null;
-            $minMarket = $obj['price']['USD'] ?? null;
+            foreach ($groups as &$group) {
+                $filters = [];
+                if ($group['floatPartValue'] !== 'any') {
+                    $range = $this->getPaintwearRange($group['floatPartValue']);
+                    if ($range['min'] !== null) {
+                        $filters[] = sprintf('floatValueFrom[]=%s,floatValueTo[]=%s', $range['min'], $range['max']);
+                    }
+                }
+                if ($group['paintSeed'] !== 'any') {
+                    $filters[] = 'paintSeed[]=' . $group['paintSeed'];
+                }
+                if ($group['phase'] !== 'any') {
+                    $filters[] = 'phase[]=' . $group['phase'];
+                }
 
-            $result[] = [
-                'title' => $item->title,
-                'market_min_price_usd' => $minMarket,
-                'target_max_price_usd' => $maxTarget,
-            ];
+                $params = [
+                    'side' => 'market',
+                    'orderBy' => 'price',
+                    'orderDir' => 'asc',
+                    'title' => $item->title,
+                    'priceFrom' => 0,
+                    'priceTo' => 0,
+                    'gameId' => 'a8db',
+                    'types' => 'dmarket',
+                    'myFavorites' => 'false',
+                    'limit' => 3,
+                    'currency' => 'USD',
+                ];
+
+                $params['treeFilters'] = $filters ? implode(',', $filters) : '';
+
+                $marketData = $dmarket->getMarketItems($params);
+                $objects = $marketData['objects'] ?? [];
+
+                $prices = [];
+                foreach ($objects as $obj) {
+                    if (isset($obj['price']['USD'])) {
+                        $prices[] = intval($obj['price']['USD']) / 100;
+                    }
+                }
+
+                $group['market_min_prices_usd'] = $prices;
+                $group['title'] = $item->title;
+
+                $result[] = $group;
+            }
         }
 
         return response()->json($result);
-    }
-    private function getAttr(array $target, string $name): ?string
-    {
-        foreach ($target['Attributes'] ?? [] as $attr) {
-            if (($attr['Name'] ?? null) === $name) {
-                return $attr['Value'];
-            }
-        }
-        return null;
     }
 
 
