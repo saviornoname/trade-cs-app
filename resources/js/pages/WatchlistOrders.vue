@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import axios from 'axios';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { route } from 'ziggy-js';
 
 interface WatchItem {
@@ -14,6 +14,8 @@ const search = ref('');
 const showItems = ref(true);
 const currentPage = ref(1);
 const perPage = 10;
+const totalPages = ref(1);
+const activeOnly = ref(true);
 const comparisons = ref<any[]>([]);
 const file = ref<File | null>(null);
 const isSubmitting = ref(false);
@@ -21,8 +23,16 @@ const successMessage = ref('');
 const errorMessage = ref('');
 
 const loadItems = async () => {
-    const res = await axios.get(route('watchlist.items'));
-    items.value = res.data;
+    const res = await axios.get(route('watchlist.items'), {
+        params: {
+            page: currentPage.value,
+            per_page: perPage,
+            search: search.value,
+            active: activeOnly.value ? 1 : 0,
+        },
+    });
+    items.value = res.data.data;
+    totalPages.value = res.data.last_page;
 };
 
 const toggleActive = async (item: WatchItem) => {
@@ -30,17 +40,13 @@ const toggleActive = async (item: WatchItem) => {
     item.active = !item.active;
 };
 
-const filteredItems = computed(() => {
-    const query = search.value.toLowerCase();
-    const all = items.value.filter((i) => i.title.toLowerCase().includes(query));
-    const start = (currentPage.value - 1) * perPage;
-    return all.slice(start, start + perPage);
-});
 
-const totalPages = computed(() => {
-    const query = search.value.toLowerCase();
-    const count = items.value.filter((i) => i.title.toLowerCase().includes(query)).length;
-    return Math.max(1, Math.ceil(count / perPage));
+
+watch([currentPage, search, activeOnly], ([newPage, newSearch, newActive], [oldPage, oldSearch, oldActive]) => {
+    if (newSearch !== oldSearch || newActive !== oldActive) {
+        currentPage.value = 1;
+    }
+    loadItems();
 });
 
 const deactivateAll = async () => {
@@ -71,14 +77,13 @@ const handleFile = (e: Event) => {
 };
 
 const submit = async () => {
-    if (!file.value) return;
-
     isSubmitting.value = true;
-    successMessage.value = '';
     errorMessage.value = '';
 
     const formData = new FormData();
-    formData.append('csv_file', file.value);
+    if (file.value) {
+        formData.append('csv_file', file.value);
+    }
 
     try {
         await axios.post(route('watchlist.import'), formData);
@@ -94,12 +99,14 @@ const submit = async () => {
 };
 </script>
 
+
 <template>
     <div class="p-4">
         <h1 class="mb-4 text-xl font-bold">Watchlist Items</h1>
 
         <div class="mb-4 flex items-center gap-2">
             <input v-model="search" placeholder="Search..." class="rounded border px-2 py-1" />
+            <label class="flex items-center gap-1 text-sm"> <input type="checkbox" v-model="activeOnly" /> Active only </label>
             <button @click="showItems = !showItems" class="rounded border px-3 py-1">
                 {{ showItems ? 'Hide list' : 'Show list' }}
             </button>
@@ -120,18 +127,18 @@ const submit = async () => {
         </form>
         <table v-if="showItems" class="mb-6 border text-sm">
             <thead class="bg-gray-300 text-gray-900 dark:bg-gray-700 dark:text-gray-100">
-            <tr>
-                <th class="border px-2 py-1">Title</th>
-                <th class="border px-2 py-1">Active</th>
-            </tr>
+                <tr>
+                    <th class="border px-2 py-1">Title</th>
+                    <th class="border px-2 py-1">Active</th>
+                </tr>
             </thead>
             <tbody>
-            <tr v-for="item in filteredItems" :key="item.id" class="border-t">
-                <td class="border px-2 py-1">{{ item.title }}</td>
-                <td class="border px-2 py-1 text-center">
-                    <input type="checkbox" :checked="item.active" @change="toggleActive(item)" />
-                </td>
-            </tr>
+                <tr v-for="item in items" :key="item.id" class="border-t">
+                    <td class="border px-2 py-1">{{ item.title }}</td>
+                    <td class="border px-2 py-1 text-center">
+                        <input type="checkbox" :checked="item.active" @change="toggleActive(item)" />
+                    </td>
+                </tr>
             </tbody>
         </table>
 
@@ -145,22 +152,22 @@ const submit = async () => {
 
         <table class="w-full border text-sm">
             <thead class="bg-gray-300 text-gray-900 dark:bg-gray-700 dark:text-gray-100">
-            <tr>
-                <th class="border px-2 py-1">Title</th>
-                <th class="border px-2 py-1">Phase</th>
-                <th class="border px-2 py-1">Float</th>
-                <th class="border px-2 py-1">DMarket $</th>
-                <th class="border px-2 py-1">Buff ¥</th>
-            </tr>
+                <tr>
+                    <th class="border px-2 py-1">Title</th>
+                    <th class="border px-2 py-1">Phase</th>
+                    <th class="border px-2 py-1">Float</th>
+                    <th class="border px-2 py-1">DMarket $</th>
+                    <th class="border px-2 py-1">Buff ¥</th>
+                </tr>
             </thead>
             <tbody>
-            <tr v-for="c in comparisons" :key="c.title + c.float + c.phase" class="border-t">
-                <td class="border px-2 py-1">{{ c.title }}</td>
-                <td class="border px-2 py-1">{{ c.phase || '/' }}</td>
-                <td class="border px-2 py-1">{{ c.float || '/' }}</td>
-                <td class="border px-2 py-1 text-right">{{ c.dmarket_price_usd ?? '-' }}</td>
-                <td class="border px-2 py-1 text-right">{{ c.best_buff_price_cny ?? '-' }}</td>
-            </tr>
+                <tr v-for="c in comparisons" :key="c.title + c.float + c.phase" class="border-t">
+                    <td class="border px-2 py-1">{{ c.title }}</td>
+                    <td class="border px-2 py-1">{{ c.phase || '/' }}</td>
+                    <td class="border px-2 py-1">{{ c.float || '/' }}</td>
+                    <td class="border px-2 py-1 text-right">{{ c.dmarket_price_usd ?? '-' }}</td>
+                    <td class="border px-2 py-1 text-right">{{ c.best_buff_price_cny ?? '-' }}</td>
+                </tr>
             </tbody>
         </table>
     </div>

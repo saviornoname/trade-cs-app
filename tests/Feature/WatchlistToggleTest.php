@@ -18,7 +18,8 @@ class WatchlistToggleTest extends TestCase
 
         $this->actingAs($user)
             ->get(route('watchlist.items'))
-            ->assertJsonFragment(['id' => $item->id]);
+            ->assertJsonFragment(['id' => $item->id])
+            ->assertJsonStructure(['data', 'current_page']);
 
         $this->actingAs($user)
             ->patch(route('watchlist.toggle', ['item' => $item->id]))

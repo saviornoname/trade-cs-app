@@ -14,7 +14,19 @@ class UserWatchlistController extends Controller
     {
         $user = $request->user() ?: User::first();
 
-        return response()->json($user->watchlistItems()->get());
+        $query = $user->watchlistItems();
+
+        if ($request->boolean('active')) {
+            $query->where('active', true);
+        }
+
+        if ($search = $request->input('search')) {
+            $query->where('title', 'like', "%{$search}%");
+        }
+
+        $perPage = $request->integer('per_page', 10);
+
+        return response()->json($query->paginate($perPage));
     }
 
     public function import(Request $request)
