@@ -60,7 +60,7 @@ const activateAll = async () => {
 };
 
 const loadComparisons = async () => {
-    const res = await axios.get(route('dmarket.compare'));
+    const res = await axios.get(route('dmarket.targets-market'));
     comparisons.value = res.data;
 };
 
@@ -154,19 +154,15 @@ const submit = async () => {
             <thead class="bg-gray-300 text-gray-900 dark:bg-gray-700 dark:text-gray-100">
             <tr>
                 <th class="border px-2 py-1">Title</th>
-                <th class="border px-2 py-1">Phase</th>
-                <th class="border px-2 py-1">Float</th>
-                <th class="border px-2 py-1">DMarket $</th>
-                <th class="border px-2 py-1">Buff Target $</th>
+                <th class="border px-2 py-1">Market Min $</th>
+                <th class="border px-2 py-1">Target Max $</th>
             </tr>
             </thead>
             <tbody>
-            <tr v-for="c in comparisons" :key="c.title + c.float + c.phase" class="border-t">
+            <tr v-for="c in comparisons" :key="c.title" class="border-t">
                 <td class="border px-2 py-1">{{ c.title }}</td>
-                <td class="border px-2 py-1">{{ c.phase || '/' }}</td>
-                <td class="border px-2 py-1">{{ c.float || '/' }}</td>
-                <td class="border px-2 py-1 text-right">{{ c.dmarket_price_usd ?? '-' }}</td>
-                <td class="border px-2 py-1 text-right">{{ c.buff_target_price_usd ?? c.best_buff_price_cny ?? '-' }}</td>
+                <td class="border px-2 py-1 text-right">{{ c.market_min_price_usd ?? '-' }}</td>
+                <td class="border px-2 py-1 text-right">{{ c.target_max_price_usd ?? '-' }}</td>
             </tr>
             </tbody>
         </table>

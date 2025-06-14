@@ -89,6 +89,9 @@ class DMarketService
 
     public function getMarketTargets(string $gameId, string $title): ?array
     {
+        $query = [
+            'limit' => 1000,
+        ];
         // 1. route для реального URL (треба ENCODED title)
         $encodedTitle = rawurlencode($title);
         $routeForUrl = "/marketplace-api/v1/targets-by-title/{$gameId}/{$encodedTitle}";
@@ -96,7 +99,7 @@ class DMarketService
         // 2. route для ПІДПИСУ (НЕенкоджений title)
         $routeForSign = "/marketplace-api/v1/targets-by-title/{$gameId}/{$title}";
 
-        return $this->sendRequest('GET', $routeForUrl, [], [], $routeForSign);
+        return $this->sendRequest('GET', $routeForUrl, $query, [], $routeForSign);
     }
 
 
@@ -105,7 +108,7 @@ class DMarketService
     {
         $query = [
             'BasicFilters.Status' => $status,
-            'Limit' => 12,
+            'Limit' => 100,
         ];
         return $this->sendRequest('GET', '/marketplace-api/v1/user-targets', $query);
     }

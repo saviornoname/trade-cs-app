@@ -119,7 +119,46 @@ class DMarketController extends Controller
 
         return response()->json($result);
     }
+    public function compareTargetsMarket(DMarketService $dmarket)
+    {
+        $watchItems = UserWatchlistItem::where('active', true)->get();
 
+        $result = [];
+
+        foreach ($watchItems as $item) {
+            $targetsData = $dmarket->getMarketTargets('a8db', $item->title);
+            $orders = $targetsData['orders'] ?? [];
+            $maxTarget = null;
+            foreach ($orders as $order) {
+                if (isset($order['price'])) {
+                    $price = intval($order['price']) / 100;
+                    if ($maxTarget === null || $price > $maxTarget) {
+                        $maxTarget = $price;
+                    }
+                }
+            }
+//            dd($orders);
+            $marketData = $dmarket->getMarketItems([
+                'gameId' => 'a8db',
+                'title' => $item->title,
+                'currency' => 'USD',
+                'limit' => 1,
+                'orderBy' => 'price',
+                'orderDir' => 'asc',
+            ]);
+
+            $obj = $marketData['objects'][0] ?? null;
+            $minMarket = $obj['price']['USD'] ?? null;
+
+            $result[] = [
+                'title' => $item->title,
+                'market_min_price_usd' => $minMarket,
+                'target_max_price_usd' => $maxTarget,
+            ];
+        }
+
+        return response()->json($result);
+    }
     private function getAttr(array $target, string $name): ?string
     {
         foreach ($target['Attributes'] ?? [] as $attr) {
