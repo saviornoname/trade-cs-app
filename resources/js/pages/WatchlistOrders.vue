@@ -157,7 +157,7 @@ const submit = async () => {
                     <th class="border px-2 py-1">Phase</th>
                     <th class="border px-2 py-1">Float</th>
                     <th class="border px-2 py-1">DMarket $</th>
-                    <th class="border px-2 py-1">Buff ¥</th>
+                    <th class="border px-2 py-1">Buff Target $</th>
                 </tr>
             </thead>
             <tbody>
@@ -166,7 +166,7 @@ const submit = async () => {
                     <td class="border px-2 py-1">{{ c.phase || '/' }}</td>
                     <td class="border px-2 py-1">{{ c.float || '/' }}</td>
                     <td class="border px-2 py-1 text-right">{{ c.dmarket_price_usd ?? '-' }}</td>
-                    <td class="border px-2 py-1 text-right">{{ c.best_buff_price_cny ?? '-' }}</td>
+                    <td class="border px-2 py-1 text-right">{{ c.buff_target_price_usd ?? c.best_buff_price_cny ?? '-' }}</td>
                 </tr>
             </tbody>
         </table>

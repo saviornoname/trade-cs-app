@@ -116,6 +116,25 @@ class DMarketService
         return $this->sendRequest('POST', '/marketplace-api/v1/user-targets/create', [], $targetData);
     }
 
+    public function getMarketItems(array $params): ?array
+    {
+        try {
+            $url = $this->buildUrl('/exchange/v1/market/items');
+            $response = Http::acceptJson()->get($url, $params);
+
+            if ($response->failed()) {
+                Log::error("DMarket market items error [{$url}]: {$response->status()}", [
+                    'body' => $response->body(),
+                ]);
+            }
+
+            return $response->json();
+        } catch (\Throwable $e) {
+            Log::error('DMarket market items request failed', ['exception' => $e->getMessage()]);
+            return null;
+        }
+    }
+
     public function compareWithBuff(array $filters = []): ?array
     {
         $dmarketItems = $this->getMarketTargets($filters['gameId'] ?? 'a8db', $filters['title'] ?? '');
