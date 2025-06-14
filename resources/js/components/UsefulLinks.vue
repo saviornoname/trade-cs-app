@@ -24,3 +24,4 @@ const links: LinkItem[] = [
             </li>
         </ul>
     </div>
+</template>
