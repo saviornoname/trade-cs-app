@@ -129,6 +129,16 @@ class DMarketController extends Controller
             $targetsData = $dmarket->getMarketTargets('a8db', $item->title);
             $orders = $targetsData['orders'] ?? [];
             $groups = [];
+            $phases = [];
+            $seeds = [];
+            $floatRanges = [];
+
+            $filterSets = $item->filters ?? [[
+                'min_float' => $item->min_float,
+                'max_float' => $item->max_float,
+                'phase' => $item->phase,
+                'paint_seed' => $item->paint_seed,
+            ]];
 
             foreach ($orders as $order) {
                 if (!isset($order['price'])) {
@@ -139,40 +149,28 @@ class DMarketController extends Controller
                 $seed = $order['attributes']['paintSeed'] ?? 'any';
                 $phase = $order['attributes']['phase'] ?? 'any';
 
-                $filterSets = $item->filters ?? [[
-                    'min_float' => $item->min_float,
-                    'max_float' => $item->max_float,
-                    'phase' => $item->phase,
-                    'paint_seed' => $item->paint_seed,
-                ]];
-
-                $match = false;
-                foreach ($filterSets as $filter) {
-                    if ($filter['phase'] && $filter['phase'] !== $phase) {
-                        continue;
-                    }
-                    if ($filter['paint_seed'] && $filter['paint_seed'] !== $seed) {
-                        continue;
-                    }
-                    if ($filter['min_float'] !== null || $filter['max_float'] !== null) {
-                        if ($float === 'any') {
-                            continue;
-                        }
-                        $range = $this->getPaintwearRange($float);
-                        if (
-                            ($filter['min_float'] !== null && $range['max'] < $filter['min_float']) ||
-                            ($filter['max_float'] !== null && $range['min'] > $filter['max_float'])
-                        ) {
-                            continue;
-                        }
-                    }
-
-                    $match = true;
-                    break;
-                }
-
-                if (!$match) {
+                if ($phases && !in_array($phase, $phases, true)) {
                     continue;
+                }
+                if ($seeds && !in_array($seed, $seeds, true)) {
+                    continue;
+                }
+                if ($floatRanges) {
+                    if ($float === 'any') {
+                        continue;
+                    }
+
+                    $range = $this->getPaintwearRange($float);
+                    $inRange = false;
+                    foreach ($floatRanges as [$min, $max]) {
+                        if ((($min === null) || ($range['max'] >= $min)) && (($max === null) || ($range['min'] <= $max))) {
+                            $inRange = true;
+                            break;
+                        }
+                    }
+                    if (!$inRange) {
+                        continue;
+                    }
                 }
 
                 $price = intval($order['price']) / 100;

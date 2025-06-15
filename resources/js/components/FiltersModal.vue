@@ -7,8 +7,21 @@ const props = defineProps<{ itemId: number | null; show: boolean }>();
 const emit = defineEmits(['close']);
 
 const filters = ref<any[]>([]);
-const newFilter = ref({ min_float: '', max_float: '', paint_seed: '', phase: '' });
+const fnRanges: Record<string, { min: number; max: number }> = {
+    'FN-0': { min: 0.0, max: 0.01 },
+    'FN-1': { min: 0.01, max: 0.02 },
+    'FN-2': { min: 0.02, max: 0.03 },
+    'FN-3': { min: 0.03, max: 0.04 },
+    'FN-4': { min: 0.04, max: 0.05 },
+};
 
+const newFilter = ref({
+    min_float: '',
+    max_float: '',
+    paint_seed: '',
+    phase: '',
+    fn_group: '',
+});
 const loadFilters = async () => {
     if (props.itemId === null) return;
     const res = await axios.get(route('watchlist.filters', { item: props.itemId }));
@@ -18,7 +31,7 @@ const loadFilters = async () => {
 const addFilter = async () => {
     if (props.itemId === null) return;
     await axios.post(route('watchlist.filters.add', { item: props.itemId }), newFilter.value);
-    newFilter.value = { min_float: '', max_float: '', paint_seed: '', phase: '' };
+    newFilter.value = { min_float: '', max_float: '', paint_seed: '', phase: '', fn_group: '' };
     await loadFilters();
 };
 
@@ -28,9 +41,15 @@ const deleteFilter = async (id: number) => {
 };
 
 watch(
-    () => props.show,
+    () => newFilter.value.fn_group,
     (val) => {
-        if (val) loadFilters();
+        if (val && fnRanges[val]) {
+            newFilter.value.min_float = fnRanges[val].min;
+            newFilter.value.max_float = fnRanges[val].max;
+        } else {
+            newFilter.value.min_float = '';
+            newFilter.value.max_float = '';
+        }
     },
 );
 </script>
@@ -59,7 +78,15 @@ watch(
                 </tr>
                 </tbody>
             </table>
-            <div class="mb-2 flex gap-1">
+            <div class="mb-2 flex flex-wrap gap-1">
+                <select v-model="newFilter.fn_group" class="w-24 border px-1">
+                    <option value="">FN Group</option>
+                    <option value="FN-0">FN-0</option>
+                    <option value="FN-1">FN-1</option>
+                    <option value="FN-2">FN-2</option>
+                    <option value="FN-3">FN-3</option>
+                    <option value="FN-4">FN-4</option>
+                </select>
                 <input v-model.number="newFilter.min_float" placeholder="Min" class="w-20 border px-1" />
                 <input v-model.number="newFilter.max_float" placeholder="Max" class="w-20 border px-1" />
                 <input v-model="newFilter.paint_seed" placeholder="Seed" class="w-20 border px-1" />

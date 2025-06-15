@@ -71,15 +71,6 @@ const toggleActive = async (item: WatchItem) => {
     item.active = !item.active;
 };
 
-const saveItem = async (item: WatchItem) => {
-    await axios.patch(route('watchlist.update', { item: item.id }), {
-        min_float: item.min_float,
-        max_float: item.max_float,
-        phase: item.phase,
-        paint_seed: item.paint_seed,
-    });
-};
-
 watch([search, activeOnly], () => {
     currentPage.value = 1;
     loadItems();
@@ -214,7 +205,6 @@ const displayComparisons = computed(() => {
                 <th class="border px-2 py-1">Max Float</th>
                 <th class="border px-2 py-1">Seed</th>
                 <th class="border px-2 py-1">Phase</th>
-                <th class="border px-2 py-1">Save</th>
                 <th class="border px-2 py-1">Filters</th>
             </tr>
             </thead>
@@ -224,19 +214,15 @@ const displayComparisons = computed(() => {
                 <td class="border px-2 py-1 text-center">
                     <input type="checkbox" :checked="item.active" @change="toggleActive(item)" />
                 </td>
-                <td class="border px-2 py-1">
-                    <input v-model.number="item.min_float" type="number" step="0.0001" class="w-24 rounded border px-1" />
-                </td>
-                <td class="border px-2 py-1">
-                    <input v-model.number="item.max_float" type="number" step="0.0001" class="w-24 rounded border px-1" />
-                </td>
-                <td class="border px-2 py-1"><input v-model="item.paint_seed" class="w-20 rounded border px-1" /></td>
-                <td class="border px-2 py-1"><input v-model="item.phase" class="w-20 rounded border px-1" /></td>
-                <td class="border px-2 py-1 text-center"><button @click="saveItem(item)" class="rounded border px-2">💾</button></td>
+                <td class="border px-2 py-1 text-right">{{ item.min_float ?? '-' }}</td>
+                <td class="border px-2 py-1 text-right">{{ item.max_float ?? '-' }}</td>
+                <td class="border px-2 py-1">{{ item.paint_seed ?? '-' }}</td>
+                <td class="border px-2 py-1">{{ item.phase ?? '-' }}</td>
                 <td class="border px-2 py-1 text-center"><button @click="filterItemId = item.id" class="rounded border px-2">⚙</button></td>
             </tr>
             </tbody>
         </table>
+
 
         <div v-if="showItems" class="mb-6 flex items-center gap-2">
             <button
