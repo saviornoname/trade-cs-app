@@ -36,3 +36,7 @@ Route::post('/watchlist/items/{item}/filters', [UserWatchlistController::class, 
 
 Route::delete('/watchlist/filters/{filter}', [UserWatchlistController::class, 'deleteFilter'])
     ->name('watchlist.filters.delete');
+
+Route::get('/float-ranges', function () {
+    return response()->json(\App\Models\PaintwearRange::all());
+})->name('float-ranges.list');

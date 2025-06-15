@@ -1,19 +1,13 @@
 <script setup lang="ts">
 import axios from 'axios';
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import { route } from 'ziggy-js';
 
 const props = defineProps<{ itemId: number | null; show: boolean }>();
 const emit = defineEmits(['close']);
 
 const filters = ref<any[]>([]);
-const fnRanges: Record<string, { min: number; max: number }> = {
-    'FN-0': { min: 0.0, max: 0.01 },
-    'FN-1': { min: 0.01, max: 0.02 },
-    'FN-2': { min: 0.02, max: 0.03 },
-    'FN-3': { min: 0.03, max: 0.04 },
-    'FN-4': { min: 0.04, max: 0.05 },
-};
+const fnRanges = ref<Record<string, { min: number; max: number }>>({});
 
 const newFilter = ref({
     min_float: '',
@@ -21,6 +15,19 @@ const newFilter = ref({
     paint_seed: '',
     phase: '',
     fn_group: '',
+});
+
+const loadRanges = async () => {
+    const res = await axios.get(route('float-ranges.list'));
+    const map: Record<string, { min: number; max: number }> = {};
+    res.data.forEach((r: any) => {
+        map[r.name] = { min: parseFloat(r.min), max: parseFloat(r.max) };
+    });
+    fnRanges.value = map;
+};
+
+onMounted(() => {
+    loadRanges();
 });
 const loadFilters = async () => {
     if (props.itemId === null) return;
@@ -43,9 +50,9 @@ const deleteFilter = async (id: number) => {
 watch(
     () => newFilter.value.fn_group,
     (val) => {
-        if (val && fnRanges[val]) {
-            newFilter.value.min_float = fnRanges[val].min;
-            newFilter.value.max_float = fnRanges[val].max;
+        if (val && fnRanges.value[val]) {
+            newFilter.value.min_float = fnRanges.value[val].min;
+            newFilter.value.max_float = fnRanges.value[val].max;
         } else {
             newFilter.value.min_float = '';
             newFilter.value.max_float = '';
@@ -81,11 +88,9 @@ watch(
             <div class="mb-2 flex flex-wrap gap-1">
                 <select v-model="newFilter.fn_group" class="w-24 border px-1">
                     <option value="">FN Group</option>
-                    <option value="FN-0">FN-0</option>
-                    <option value="FN-1">FN-1</option>
-                    <option value="FN-2">FN-2</option>
-                    <option value="FN-3">FN-3</option>
-                    <option value="FN-4">FN-4</option>
+                    <option v-for="(r, key) in fnRanges" :key="key" :value="key">
+                        {{ key }}
+                    </option>
                 </select>
                 <input v-model.number="newFilter.min_float" placeholder="Min" class="w-20 border px-1" />
                 <input v-model.number="newFilter.max_float" placeholder="Max" class="w-20 border px-1" />
