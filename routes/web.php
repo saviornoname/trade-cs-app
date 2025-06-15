@@ -17,3 +17,4 @@ require __DIR__.'/watchlist.php';
 require __DIR__.'/dmarket.php';
 require __DIR__.'/buff.php';
 require __DIR__.'/settings.php';
+require __DIR__.'/auth.php';
