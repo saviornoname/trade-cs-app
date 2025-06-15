@@ -139,6 +139,25 @@ class DMarketController extends Controller
                 $seed = $order['attributes']['paintSeed'] ?? 'any';
                 $phase = $order['attributes']['phase'] ?? 'any';
 
+                if ($item->phase && $item->phase !== $phase) {
+                    continue;
+                }
+                if ($item->paint_seed && $item->paint_seed !== $seed) {
+                    continue;
+                }
+                if ($item->min_float !== null || $item->max_float !== null) {
+                    if ($float === 'any') {
+                        continue;
+                    }
+                    $range = $this->getPaintwearRange($float);
+                    if (
+                        ($item->min_float !== null && $range['max'] < $item->min_float) ||
+                        ($item->max_float !== null && $range['min'] > $item->max_float)
+                    ) {
+                        continue;
+                    }
+                }
+
                 $price = intval($order['price']) / 100;
                 $key = $float . '|' . $seed . '|' . $phase;
 

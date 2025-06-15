@@ -75,6 +75,20 @@ class UserWatchlistController extends Controller
         return response()->json(['active' => $item->active]);
     }
 
+    public function update(Request $request, UserWatchlistItem $item)
+    {
+        $data = $request->validate([
+            'min_float' => 'nullable|numeric',
+            'max_float' => 'nullable|numeric',
+            'phase' => 'nullable|string',
+            'paint_seed' => 'nullable|string',
+        ]);
+
+        $item->update($data);
+
+        return response()->json(['status' => 'ok']);
+    }
+
     public function deactivateAll(Request $request)
     {
         $user = $request->user() ?: User::first();

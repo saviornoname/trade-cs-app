@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import axios from 'axios';
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch, reactive, computed } from 'vue';
 import { route } from 'ziggy-js';
 
 interface WatchItem {
     id: number;
     title: string;
     active: boolean;
+    min_float: number | null;
+    max_float: number | null;
+    phase: string | null;
+    paint_seed: string | null;
 }
 
 const items = ref<WatchItem[]>([]);
@@ -17,6 +21,21 @@ const perPage = 10;
 const totalPages = ref(1);
 const activeOnly = ref(true);
 const comparisons = ref<any[]>([]);
+const compareFilters = reactive({ float: '', seed: '', phase: '' });
+const sortKey = ref<'target_max_price_usd' | 'profit_percent'>('target_max_price_usd');
+const sortAsc = ref(false);
+const comparePage = ref(1);
+const comparePerPage = 20;
+const compareTotalPages = computed(() => {
+    let arr = comparisons.value;
+    if (compareFilters.float) arr = arr.filter(c => String(c.floatPartValue) === compareFilters.float);
+    if (compareFilters.seed) arr = arr.filter(c => String(c.paintSeed) === compareFilters.seed);
+    if (compareFilters.phase) arr = arr.filter(c => String(c.phase) === compareFilters.phase);
+    return Math.max(1, Math.ceil(arr.length / comparePerPage));
+});
+const availableFloats = ref<string[]>([]);
+const availableSeeds = ref<string[]>([]);
+const availablePhases = ref<string[]>([]);
 const file = ref<File | null>(null);
 const isSubmitting = ref(false);
 const successMessage = ref('');
@@ -40,6 +59,15 @@ const toggleActive = async (item: WatchItem) => {
     item.active = !item.active;
 };
 
+const saveItem = async (item: WatchItem) => {
+    await axios.patch(route('watchlist.update', { item: item.id }), {
+        min_float: item.min_float,
+        max_float: item.max_float,
+        phase: item.phase,
+        paint_seed: item.paint_seed,
+    });
+};
+
 
 
 watch([currentPage, search, activeOnly], ([, newSearch, newActive], [, oldSearch, oldActive]) => {
@@ -47,6 +75,10 @@ watch([currentPage, search, activeOnly], ([, newSearch, newActive], [, oldSearch
         currentPage.value = 1;
     }
     loadItems();
+});
+
+watch([() => compareFilters.float, () => compareFilters.seed, () => compareFilters.phase], () => {
+    comparePage.value = 1;
 });
 
 const deactivateAll = async () => {
@@ -62,6 +94,18 @@ const activateAll = async () => {
 const loadComparisons = async () => {
     const res = await axios.get(route('dmarket.targets-market'));
     comparisons.value = res.data;
+    const f = new Set<string>();
+    const s = new Set<string>();
+    const p = new Set<string>();
+    comparisons.value.forEach((c: any) => {
+        if (c.floatPartValue) f.add(String(c.floatPartValue));
+        if (c.paintSeed !== undefined && c.paintSeed !== null) s.add(String(c.paintSeed));
+        if (c.phase) p.add(String(c.phase));
+    });
+    availableFloats.value = Array.from(f).sort();
+    availableSeeds.value = Array.from(s).sort((a, b) => +a - +b);
+    availablePhases.value = Array.from(p).sort();
+    comparePage.value = 1;
 };
 
 onMounted(async () => {
@@ -97,6 +141,31 @@ const submit = async () => {
         isSubmitting.value = false;
     }
 };
+
+const displayComparisons = computed(() => {
+    let arr = comparisons.value.map(c => {
+        const minMarket = Array.isArray(c.market_min_prices_usd) && c.market_min_prices_usd.length
+            ? Math.min(...c.market_min_prices_usd)
+            : null;
+        const profit =
+            minMarket !== null && c.target_max_price_usd !== undefined && c.target_max_price_usd !== null
+                ? ((c.target_max_price_usd - minMarket) / minMarket) * 100
+                : null;
+        return { ...c, minMarket, profit_percent: profit };
+    });
+
+    if (compareFilters.float) arr = arr.filter(c => String(c.floatPartValue) === compareFilters.float);
+    if (compareFilters.seed) arr = arr.filter(c => String(c.paintSeed) === compareFilters.seed);
+    if (compareFilters.phase) arr = arr.filter(c => String(c.phase) === compareFilters.phase);
+
+    arr.sort((a, b) => {
+        const aVal = a[sortKey.value] ?? 0;
+        const bVal = b[sortKey.value] ?? 0;
+        return sortAsc.value ? aVal - bVal : bVal - aVal;
+    });
+
+    return arr.slice((comparePage.value - 1) * comparePerPage, comparePage.value * comparePerPage);
+});
 </script>
 
 
@@ -127,18 +196,28 @@ const submit = async () => {
         </form>
         <table v-if="showItems" class="mb-6 border text-sm">
             <thead class="bg-gray-300 text-gray-900 dark:bg-gray-700 dark:text-gray-100">
-                <tr>
-                    <th class="border px-2 py-1">Title</th>
-                    <th class="border px-2 py-1">Active</th>
-                </tr>
+            <tr>
+                <th class="border px-2 py-1">Title</th>
+                <th class="border px-2 py-1">Active</th>
+                <th class="border px-2 py-1">Min Float</th>
+                <th class="border px-2 py-1">Max Float</th>
+                <th class="border px-2 py-1">Seed</th>
+                <th class="border px-2 py-1">Phase</th>
+                <th class="border px-2 py-1">Save</th>
+            </tr>
             </thead>
             <tbody>
-                <tr v-for="item in items" :key="item.id" class="border-t">
-                    <td class="border px-2 py-1">{{ item.title }}</td>
-                    <td class="border px-2 py-1 text-center">
-                        <input type="checkbox" :checked="item.active" @change="toggleActive(item)" />
-                    </td>
-                </tr>
+            <tr v-for="item in items" :key="item.id" class="border-t">
+                <td class="border px-2 py-1">{{ item.title }}</td>
+                <td class="border px-2 py-1 text-center">
+                    <input type="checkbox" :checked="item.active" @change="toggleActive(item)" />
+                </td>
+                <td class="border px-2 py-1"><input v-model.number="item.min_float" type="number" step="0.0001" class="w-24 border rounded px-1" /></td>
+                <td class="border px-2 py-1"><input v-model.number="item.max_float" type="number" step="0.0001" class="w-24 border rounded px-1" /></td>
+                <td class="border px-2 py-1"><input v-model="item.paint_seed" class="w-20 border rounded px-1" /></td>
+                <td class="border px-2 py-1"><input v-model="item.phase" class="w-20 border rounded px-1" /></td>
+                <td class="border px-2 py-1 text-center"><button @click="saveItem(item)" class="px-2 border rounded">💾</button></td>
+            </tr>
             </tbody>
         </table>
 
@@ -150,6 +229,22 @@ const submit = async () => {
 
         <button @click="loadComparisons" class="mb-4 rounded border px-3 py-1">Refresh Comparison</button>
 
+        <div class="flex flex-wrap gap-2 mb-2">
+            <select v-model="compareFilters.float" class="border px-2 py-1 rounded">
+                <option value="">Float</option>
+                <option v-for="f in availableFloats" :key="f" :value="f">{{ f }}</option>
+            </select>
+            <select v-model="compareFilters.seed" class="border px-2 py-1 rounded">
+                <option value="">Seed</option>
+                <option v-for="s in availableSeeds" :key="s" :value="s">{{ s }}</option>
+            </select>
+            <select v-model="compareFilters.phase" class="border px-2 py-1 rounded">
+                <option value="">Phase</option>
+                <option v-for="p in availablePhases" :key="p" :value="p">{{ p }}</option>
+            </select>
+            <button @click="sortAsc = !sortAsc" class="border px-2 rounded">Sort {{ sortAsc ? '↑' : '↓' }}</button>
+        </div>
+
         <table class="w-full border text-sm">
             <thead class="bg-gray-300 text-gray-900 dark:bg-gray-700 dark:text-gray-100">
             <tr>
@@ -159,10 +254,11 @@ const submit = async () => {
                 <th class="border px-2 py-1">Phase</th>
                 <th class="border px-2 py-1">Market Min $ (3)</th>
                 <th class="border px-2 py-1">Target Max $</th>
+                <th class="border px-2 py-1">Profit %</th>
             </tr>
             </thead>
             <tbody>
-            <tr v-for="c in comparisons" :key="c.title + c.floatPartValue + c.paintSeed + c.phase" class="border-t">
+            <tr v-for="c in displayComparisons" :key="c.title + c.floatPartValue + c.paintSeed + c.phase" class="border-t">
                 <td class="border px-2 py-1">{{ c.title }}</td>
                 <td class="border px-2 py-1 text-right">{{ c.floatPartValue }}</td>
                 <td class="border px-2 py-1 text-right">{{ c.paintSeed }}</td>
@@ -174,8 +270,14 @@ const submit = async () => {
                     <span v-else>-</span>
                 </td>
                 <td class="border px-2 py-1 text-right">{{ c.target_max_price_usd ?? '-' }}</td>
+                <td class="border px-2 py-1 text-right">{{ c.profit_percent !== null ? c.profit_percent.toFixed(2) + '%' : '-' }}</td>
             </tr>
             </tbody>
         </table>
+        <div class="flex items-center gap-2 mt-2">
+            <button @click="comparePage = Math.max(1, comparePage - 1)" class="border px-2">Prev</button>
+            <span>Page {{ comparePage }} / {{ compareTotalPages }}</span>
+            <button @click="comparePage = Math.min(compareTotalPages, comparePage + 1)" class="border px-2">Next</button>
+        </div>
     </div>
 </template>

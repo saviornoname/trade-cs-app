@@ -19,6 +19,9 @@ Route::get('/watchlist/items', [UserWatchlistController::class, 'index'])
 Route::patch('/watchlist/items/{item}', [UserWatchlistController::class, 'toggleActive'])
     ->name('watchlist.toggle');
 
+Route::patch('/watchlist/items/{item}/update', [UserWatchlistController::class, 'update'])
+    ->name('watchlist.update');
+
 Route::post('/watchlist/deactivate-all', [UserWatchlistController::class, 'deactivateAll'])
     ->name('watchlist.deactivateAll');
 
