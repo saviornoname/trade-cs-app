@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PaintwearRange;
+use App\Models\UserWatchlistItem;
+use App\Services\BuffApiService;
+use App\Services\DMarketService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Services\DMarketService;
-use App\Services\BuffApiService;
-use App\Models\UserWatchlistItem;
-use App\Models\PaintwearRange;
 
 class DMarketController extends Controller
 {
@@ -47,21 +47,20 @@ class DMarketController extends Controller
         return response()->json($response);
     }
 
-
     public function compareWithBuff(DMarketService $dmarket, BuffApiService $buff)
     {
         $targets = $dmarket->getUserTargets('TargetStatusActive');
 
         $result = [];
 
-        if (!empty($targets['Items'])) {
+        if (! empty($targets['Items'])) {
             foreach ($targets['Items'] as $target) {
                 $title = $target['Title'] ?? '';
                 $floatPartValue = $this->getAttr($target, 'floatPartValue');
                 $phase = $this->getAttr($target, 'phase');
 
                 $watchItem = UserWatchlistItem::where('title', $title)->first();
-                if (!$watchItem || !$watchItem->item_id) {
+                if (! $watchItem || ! $watchItem->item_id) {
                     continue;
                 }
 
@@ -132,11 +131,11 @@ class DMarketController extends Controller
             $groups = [];
             $filterSets = $item->filters()->get();
             foreach ($orders as $order) {
-                if (!isset($order['price'])) {
+                if (! isset($order['price'])) {
                     continue;
                 }
 
-                $float = $order['attributes']['floatPartValue'] ?? null;
+                $float = $this->normalizeFloat($order['attributes']['floatPartValue'] ?? null);
                 $seed = $order['attributes']['paintSeed'] ?? null;
                 $phase = $order['attributes']['phase'] ?? null;
 
@@ -151,13 +150,12 @@ class DMarketController extends Controller
                         }
 
                         if ($f->min_float !== null) {
-                            if ($float === null || floatval($float) <= floatval($f->min_float)) {
+                            if ($float === null || $float <= floatval($f->min_float)) {
                                 $ok = false;
                             }
                         }
                         if ($f->max_float !== null) {
-                            if ($float === null || floatval($float) >= floatval($f->max_float)) {
-
+                            if ($float === null || $float >= floatval($f->max_float)) {
                                 $ok = false;
                             }
                         }
@@ -178,9 +176,9 @@ class DMarketController extends Controller
                 $phaseKey = $phase ?? 'any';
 
                 $price = intval($order['price']) / 100;
-                $key = $floatKey . '|' . $seedKey . '|' . $phaseKey;
-//                dd($key);
-                if (!isset($groups[$key]) || $price > $groups[$key]['target_max_price_usd']) {
+                $key = $floatKey.'|'.$seedKey.'|'.$phaseKey;
+                //                dd($key);
+                if (! isset($groups[$key]) || $price > $groups[$key]['target_max_price_usd']) {
                     $groups[$key] = [
                         'floatPartValue' => $float,
                         'paintSeed' => $seed,
@@ -199,10 +197,10 @@ class DMarketController extends Controller
                     }
                 }
                 if ($group['paintSeed'] !== 'any') {
-                    $filters[] = 'paintSeed[]=' . $group['paintSeed'];
+                    $filters[] = 'paintSeed[]='.$group['paintSeed'];
                 }
                 if ($group['phase'] !== 'any') {
-                    $filters[] = 'phase[]=' . $group['phase'];
+                    $filters[] = 'phase[]='.$group['phase'];
                 }
 
                 $params = [
@@ -250,5 +248,20 @@ class DMarketController extends Controller
         $range = PaintwearRange::where('name', $floatPartValue)->first();
 
         return $range ? ['min' => $range->min, 'max' => $range->max] : ['min' => null, 'max' => null];
+    }
+
+    private function normalizeFloat(?string $floatPartValue): ?float
+    {
+        if ($floatPartValue === null) {
+            return null;
+        }
+
+        if (is_numeric($floatPartValue)) {
+            return floatval($floatPartValue);
+        }
+
+        $range = PaintwearRange::where('name', $floatPartValue)->first();
+
+        return $range ? ($range->min + $range->max) / 2 : null;
     }
 }
