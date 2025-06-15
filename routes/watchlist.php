@@ -27,3 +27,12 @@ Route::post('/watchlist/deactivate-all', [UserWatchlistController::class, 'deact
 
 Route::post('/watchlist/activate-all', [UserWatchlistController::class, 'activateAll'])
     ->name('watchlist.activateAll');
+
+Route::get('/watchlist/items/{item}/filters', [UserWatchlistController::class, 'filters'])
+    ->name('watchlist.filters');
+
+Route::post('/watchlist/items/{item}/filters', [UserWatchlistController::class, 'addFilter'])
+    ->name('watchlist.filters.add');
+
+Route::delete('/watchlist/filters/{filter}', [UserWatchlistController::class, 'deleteFilter'])
+    ->name('watchlist.filters.delete');

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import axios from 'axios';
-import { onMounted, ref, watch, reactive, computed } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { route } from 'ziggy-js';
+import FiltersModal from '../components/FiltersModal.vue';
 
 interface WatchItem {
     id: number;
@@ -21,6 +22,7 @@ const perPage = 10;
 const totalPages = ref(1);
 const activeOnly = ref(true);
 const comparisons = ref<any[]>([]);
+const filterItemId = ref<number | null>(null);
 const compareFilters = reactive({ float: '', seed: '', phase: '' });
 const sortKey = ref<'target_max_price_usd' | 'profit_percent'>('target_max_price_usd');
 const sortAsc = ref(false);
@@ -28,9 +30,9 @@ const comparePage = ref(1);
 const comparePerPage = 20;
 const compareTotalPages = computed(() => {
     let arr = comparisons.value;
-    if (compareFilters.float) arr = arr.filter(c => String(c.floatPartValue) === compareFilters.float);
-    if (compareFilters.seed) arr = arr.filter(c => String(c.paintSeed) === compareFilters.seed);
-    if (compareFilters.phase) arr = arr.filter(c => String(c.phase) === compareFilters.phase);
+    if (compareFilters.float) arr = arr.filter((c) => String(c.floatPartValue) === compareFilters.float);
+    if (compareFilters.seed) arr = arr.filter((c) => String(c.paintSeed) === compareFilters.seed);
+    if (compareFilters.phase) arr = arr.filter((c) => String(c.phase) === compareFilters.phase);
     return Math.max(1, Math.ceil(arr.length / comparePerPage));
 });
 const availableFloats = ref<string[]>([]);
@@ -41,7 +43,7 @@ const isSubmitting = ref(false);
 const successMessage = ref('');
 const errorMessage = ref('');
 
-const loadItems = async () => {
+const loadItems = async (append = false) => {
     const res = await axios.get(route('watchlist.items'), {
         params: {
             page: currentPage.value,
@@ -50,8 +52,18 @@ const loadItems = async () => {
             active: activeOnly.value ? 1 : 0,
         },
     });
-    items.value = res.data.data;
+    if (append) {
+        items.value = [...items.value, ...res.data.data];
+    } else {
+        items.value = res.data.data;
+    }
     totalPages.value = res.data.last_page;
+};
+
+const loadMore = async () => {
+    if (currentPage.value >= totalPages.value) return;
+    currentPage.value += 1;
+    await loadItems(true);
 };
 
 const toggleActive = async (item: WatchItem) => {
@@ -68,12 +80,8 @@ const saveItem = async (item: WatchItem) => {
     });
 };
 
-
-
-watch([currentPage, search, activeOnly], ([, newSearch, newActive], [, oldSearch, oldActive]) => {
-    if (newSearch !== oldSearch || newActive !== oldActive) {
-        currentPage.value = 1;
-    }
+watch([search, activeOnly], () => {
+    currentPage.value = 1;
     loadItems();
 });
 
@@ -143,10 +151,8 @@ const submit = async () => {
 };
 
 const displayComparisons = computed(() => {
-    let arr = comparisons.value.map(c => {
-        const minMarket = Array.isArray(c.market_min_prices_usd) && c.market_min_prices_usd.length
-            ? Math.min(...c.market_min_prices_usd)
-            : null;
+    let arr = comparisons.value.map((c) => {
+        const minMarket = Array.isArray(c.market_min_prices_usd) && c.market_min_prices_usd.length ? Math.min(...c.market_min_prices_usd) : null;
         const profit =
             minMarket !== null && c.target_max_price_usd !== undefined && c.target_max_price_usd !== null
                 ? ((c.target_max_price_usd - minMarket) / minMarket) * 100
@@ -154,9 +160,9 @@ const displayComparisons = computed(() => {
         return { ...c, minMarket, profit_percent: profit };
     });
 
-    if (compareFilters.float) arr = arr.filter(c => String(c.floatPartValue) === compareFilters.float);
-    if (compareFilters.seed) arr = arr.filter(c => String(c.paintSeed) === compareFilters.seed);
-    if (compareFilters.phase) arr = arr.filter(c => String(c.phase) === compareFilters.phase);
+    if (compareFilters.float) arr = arr.filter((c) => String(c.floatPartValue) === compareFilters.float);
+    if (compareFilters.seed) arr = arr.filter((c) => String(c.paintSeed) === compareFilters.seed);
+    if (compareFilters.phase) arr = arr.filter((c) => String(c.phase) === compareFilters.phase);
 
     arr.sort((a, b) => {
         const aVal = a[sortKey.value] ?? 0;
@@ -167,7 +173,6 @@ const displayComparisons = computed(() => {
     return arr.slice((comparePage.value - 1) * comparePerPage, comparePage.value * comparePerPage);
 });
 </script>
-
 
 <template>
     <div class="p-4">
@@ -204,6 +209,7 @@ const displayComparisons = computed(() => {
                 <th class="border px-2 py-1">Seed</th>
                 <th class="border px-2 py-1">Phase</th>
                 <th class="border px-2 py-1">Save</th>
+                <th class="border px-2 py-1">Filters</th>
             </tr>
             </thead>
             <tbody>
@@ -212,37 +218,54 @@ const displayComparisons = computed(() => {
                 <td class="border px-2 py-1 text-center">
                     <input type="checkbox" :checked="item.active" @change="toggleActive(item)" />
                 </td>
-                <td class="border px-2 py-1"><input v-model.number="item.min_float" type="number" step="0.0001" class="w-24 border rounded px-1" /></td>
-                <td class="border px-2 py-1"><input v-model.number="item.max_float" type="number" step="0.0001" class="w-24 border rounded px-1" /></td>
-                <td class="border px-2 py-1"><input v-model="item.paint_seed" class="w-20 border rounded px-1" /></td>
-                <td class="border px-2 py-1"><input v-model="item.phase" class="w-20 border rounded px-1" /></td>
-                <td class="border px-2 py-1 text-center"><button @click="saveItem(item)" class="px-2 border rounded">💾</button></td>
+                <td class="border px-2 py-1">
+                    <input v-model.number="item.min_float" type="number" step="0.0001" class="w-24 rounded border px-1" />
+                </td>
+                <td class="border px-2 py-1">
+                    <input v-model.number="item.max_float" type="number" step="0.0001" class="w-24 rounded border px-1" />
+                </td>
+                <td class="border px-2 py-1"><input v-model="item.paint_seed" class="w-20 rounded border px-1" /></td>
+                <td class="border px-2 py-1"><input v-model="item.phase" class="w-20 rounded border px-1" /></td>
+                <td class="border px-2 py-1 text-center"><button @click="saveItem(item)" class="rounded border px-2">💾</button></td>
+                <td class="border px-2 py-1 text-center"><button @click="filterItemId = item.id" class="rounded border px-2">⚙</button></td>
             </tr>
             </tbody>
         </table>
 
         <div v-if="showItems" class="mb-6 flex items-center gap-2">
-            <button @click="currentPage = Math.max(1, currentPage - 1)" class="border px-2">Prev</button>
+            <button
+                @click="
+                    currentPage = Math.max(1, currentPage - 1);
+                    loadItems();
+                "
+                class="border px-2"
+            >
+                Prev
+            </button>
             <span>Page {{ currentPage }} / {{ totalPages }}</span>
-            <button @click="currentPage = Math.min(totalPages, currentPage + 1)" class="border px-2">Next</button>
+            <button v-if="currentPage < totalPages" @click="loadMore" class="border px-2">Load more</button>
         </div>
 
         <button @click="loadComparisons" class="mb-4 rounded border px-3 py-1">Refresh Comparison</button>
 
-        <div class="flex flex-wrap gap-2 mb-2">
-            <select v-model="compareFilters.float" class="border px-2 py-1 rounded">
+        <div class="mb-2 flex flex-wrap gap-2">
+            <select v-model="compareFilters.float" class="rounded border px-2 py-1">
                 <option value="">Float</option>
                 <option v-for="f in availableFloats" :key="f" :value="f">{{ f }}</option>
             </select>
-            <select v-model="compareFilters.seed" class="border px-2 py-1 rounded">
+            <select v-model="compareFilters.seed" class="rounded border px-2 py-1">
                 <option value="">Seed</option>
                 <option v-for="s in availableSeeds" :key="s" :value="s">{{ s }}</option>
             </select>
-            <select v-model="compareFilters.phase" class="border px-2 py-1 rounded">
+            <select v-model="compareFilters.phase" class="rounded border px-2 py-1">
                 <option value="">Phase</option>
                 <option v-for="p in availablePhases" :key="p" :value="p">{{ p }}</option>
             </select>
-            <button @click="sortAsc = !sortAsc" class="border px-2 rounded">Sort {{ sortAsc ? '↑' : '↓' }}</button>
+            <select v-model="sortKey" class="rounded border px-2 py-1">
+                <option value="target_max_price_usd">Target Max $</option>
+                <option value="profit_percent">Profit %</option>
+            </select>
+            <button @click="sortAsc = !sortAsc" class="rounded border px-2">Sort {{ sortAsc ? '↑' : '↓' }}</button>
         </div>
 
         <table class="w-full border text-sm">
@@ -264,9 +287,9 @@ const displayComparisons = computed(() => {
                 <td class="border px-2 py-1 text-right">{{ c.paintSeed }}</td>
                 <td class="border px-2 py-1 text-right">{{ c.phase }}</td>
                 <td class="border px-2 py-1 text-right">
-                    <span v-if="Array.isArray(c.market_min_prices_usd) && c.market_min_prices_usd.length">
-                        {{ c.market_min_prices_usd.join(', ') }}
-                    </span>
+                        <span v-if="Array.isArray(c.market_min_prices_usd) && c.market_min_prices_usd.length">
+                            {{ c.market_min_prices_usd.join(', ') }}
+                        </span>
                     <span v-else>-</span>
                 </td>
                 <td class="border px-2 py-1 text-right">{{ c.target_max_price_usd ?? '-' }}</td>
@@ -274,10 +297,11 @@ const displayComparisons = computed(() => {
             </tr>
             </tbody>
         </table>
-        <div class="flex items-center gap-2 mt-2">
+        <div class="mt-2 flex items-center gap-2">
             <button @click="comparePage = Math.max(1, comparePage - 1)" class="border px-2">Prev</button>
             <span>Page {{ comparePage }} / {{ compareTotalPages }}</span>
             <button @click="comparePage = Math.min(compareTotalPages, comparePage + 1)" class="border px-2">Next</button>
         </div>
+        <FiltersModal :show="filterItemId !== null" :item-id="filterItemId" @close="filterItemId = null" />
     </div>
 </template>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\UserWatchlistItem;
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Models\WatchlistItemFilter;
 use Illuminate\Support\Facades\Log;
 use League\Csv\Reader;
 
@@ -37,7 +38,7 @@ class UserWatchlistController extends Controller
 
         // Зберігаємо файл у public disk (тобто storage/app/public/uploads)
         $path = $request->file('csv_file')->store('uploads', 'public');
-        Log::info('Файл збережено за шляхом: ' . $path);
+        Log::info('Файл збережено за шляхом: '.$path);
 
         // Використовуємо storage_path з префіксом "app/public"
         $csv = Reader::createFromPath(storage_path("app/public/{$path}"), 'r');
@@ -45,7 +46,7 @@ class UserWatchlistController extends Controller
         $csv->setHeaderOffset(0);
 
         $user = $request->user();
-        if (!$user) {
+        if (! $user) {
             $user = User::inRandomOrder()->first();
         }
         $importedIds = [];
@@ -66,9 +67,10 @@ class UserWatchlistController extends Controller
 
         return response()->json(['message' => 'Імпорт завершено успішно.']);
     }
+
     public function toggleActive(Request $request, UserWatchlistItem $item)
     {
-        $item->active = !$item->active;
+        $item->active = ! $item->active;
 
         $item->save();
 
@@ -104,6 +106,30 @@ class UserWatchlistController extends Controller
 
         return response()->json(['status' => 'ok']);
     }
+
+    public function filters(UserWatchlistItem $item)
+    {
+        return response()->json($item->filters()->get());
+    }
+
+    public function addFilter(Request $request, UserWatchlistItem $item)
+    {
+        $data = $request->validate([
+            'min_float' => 'nullable|numeric',
+            'max_float' => 'nullable|numeric',
+            'phase' => 'nullable|string',
+            'paint_seed' => 'nullable|string',
+        ]);
+
+        $filter = $item->filters()->create($data);
+
+        return response()->json($filter, 201);
+    }
+
+    public function deleteFilter(WatchlistItemFilter $filter)
+    {
+        $filter->delete();
+
+        return response()->json(['status' => 'ok']);
+    }
 }
-
-

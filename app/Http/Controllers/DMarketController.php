@@ -139,23 +139,40 @@ class DMarketController extends Controller
                 $seed = $order['attributes']['paintSeed'] ?? 'any';
                 $phase = $order['attributes']['phase'] ?? 'any';
 
-                if ($item->phase && $item->phase !== $phase) {
-                    continue;
-                }
-                if ($item->paint_seed && $item->paint_seed !== $seed) {
-                    continue;
-                }
-                if ($item->min_float !== null || $item->max_float !== null) {
-                    if ($float === 'any') {
+                $filterSets = $item->filters ?? [[
+                    'min_float' => $item->min_float,
+                    'max_float' => $item->max_float,
+                    'phase' => $item->phase,
+                    'paint_seed' => $item->paint_seed,
+                ]];
+
+                $match = false;
+                foreach ($filterSets as $filter) {
+                    if ($filter['phase'] && $filter['phase'] !== $phase) {
                         continue;
                     }
-                    $range = $this->getPaintwearRange($float);
-                    if (
-                        ($item->min_float !== null && $range['max'] < $item->min_float) ||
-                        ($item->max_float !== null && $range['min'] > $item->max_float)
-                    ) {
+                    if ($filter['paint_seed'] && $filter['paint_seed'] !== $seed) {
                         continue;
                     }
+                    if ($filter['min_float'] !== null || $filter['max_float'] !== null) {
+                        if ($float === 'any') {
+                            continue;
+                        }
+                        $range = $this->getPaintwearRange($float);
+                        if (
+                            ($filter['min_float'] !== null && $range['max'] < $filter['min_float']) ||
+                            ($filter['max_float'] !== null && $range['min'] > $filter['max_float'])
+                        ) {
+                            continue;
+                        }
+                    }
+
+                    $match = true;
+                    break;
+                }
+
+                if (!$match) {
+                    continue;
                 }
 
                 $price = intval($order['price']) / 100;
