@@ -201,10 +201,6 @@ const displayComparisons = computed(() => {
             <tr>
                 <th class="border px-2 py-1">Title</th>
                 <th class="border px-2 py-1">Active</th>
-                <th class="border px-2 py-1">Min Float</th>
-                <th class="border px-2 py-1">Max Float</th>
-                <th class="border px-2 py-1">Seed</th>
-                <th class="border px-2 py-1">Phase</th>
                 <th class="border px-2 py-1">Filters</th>
             </tr>
             </thead>
@@ -214,10 +210,6 @@ const displayComparisons = computed(() => {
                 <td class="border px-2 py-1 text-center">
                     <input type="checkbox" :checked="item.active" @change="toggleActive(item)" />
                 </td>
-                <td class="border px-2 py-1 text-right">{{ item.min_float ?? '-' }}</td>
-                <td class="border px-2 py-1 text-right">{{ item.max_float ?? '-' }}</td>
-                <td class="border px-2 py-1">{{ item.paint_seed ?? '-' }}</td>
-                <td class="border px-2 py-1">{{ item.phase ?? '-' }}</td>
                 <td class="border px-2 py-1 text-center"><button @click="filterItemId = item.id" class="rounded border px-2">⚙</button></td>
             </tr>
             </tbody>

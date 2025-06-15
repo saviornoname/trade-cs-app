@@ -80,15 +80,6 @@ class UserWatchlistController extends Controller
 
     public function update(Request $request, UserWatchlistItem $item)
     {
-        $data = $request->validate([
-            'min_float' => 'nullable|numeric',
-            'max_float' => 'nullable|numeric',
-            'phase' => 'nullable|string',
-            'paint_seed' => 'nullable|string',
-        ]);
-
-        $item->update($data);
-
         return response()->json(['status' => 'ok']);
     }
 

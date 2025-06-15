@@ -115,7 +115,6 @@ class DMarketController extends Controller
                 'phase' => $phase,
                 'float' => $float,
                 'dmarket_price_usd' => $dmPrice,
-                'buff_target_price_usd' => $item->max_price_usd ? $item->max_price_usd / 100 : null,
             ];
         }
 
@@ -131,53 +130,56 @@ class DMarketController extends Controller
             $targetsData = $dmarket->getMarketTargets('a8db', $item->title);
             $orders = $targetsData['orders'] ?? [];
             $groups = [];
-            $phases = [];
-            $seeds = [];
-            $floatRanges = [];
-
-            $filterSets = $item->filters ?? [[
-                'min_float' => $item->min_float,
-                'max_float' => $item->max_float,
-                'phase' => $item->phase,
-                'paint_seed' => $item->paint_seed,
-            ]];
-
+            $filterSets = $item->filters()->get();
             foreach ($orders as $order) {
                 if (!isset($order['price'])) {
                     continue;
                 }
 
-                $float = $order['attributes']['floatPartValue'] ?? 'any';
-                $seed = $order['attributes']['paintSeed'] ?? 'any';
-                $phase = $order['attributes']['phase'] ?? 'any';
+                $float = $order['attributes']['floatPartValue'] ?? null;
+                $seed = $order['attributes']['paintSeed'] ?? null;
+                $phase = $order['attributes']['phase'] ?? null;
 
-                if ($phases && !in_array($phase, $phases, true)) {
-                    continue;
-                }
-                if ($seeds && !in_array($seed, $seeds, true)) {
-                    continue;
-                }
-                if ($floatRanges) {
-                    if ($float === 'any') {
-                        continue;
-                    }
+                if ($filterSets->isNotEmpty()) {
+                    $matched = false;
+                    foreach ($filterSets as $f) {
 
-                    $range = $this->getPaintwearRange($float);
-                    $inRange = false;
-                    foreach ($floatRanges as [$min, $max]) {
-                        if ((($min === null) || ($range['max'] >= $min)) && (($max === null) || ($range['min'] <= $max))) {
-                            $inRange = true;
+                        $ok = true;
+                        if ($f->phase !== null && $phase !== $f->phase) {
+
+                            $ok = false;
+                        }
+
+                        if ($f->min_float !== null) {
+                            if ($float === null || floatval($float) <= floatval($f->min_float)) {
+                                $ok = false;
+                            }
+                        }
+                        if ($f->max_float !== null) {
+                            if ($float === null || floatval($float) >= floatval($f->max_float)) {
+
+                                $ok = false;
+                            }
+                        }
+
+                        if ($ok) {
+                            $matched = true;
                             break;
                         }
                     }
-                    if (!$inRange) {
+
+                    if (!$matched) {
                         continue;
                     }
                 }
 
-                $price = intval($order['price']) / 100;
-                $key = $float . '|' . $seed . '|' . $phase;
+                $floatKey = $float ?? 'any';
+                $seedKey = $seed ?? 'any';
+                $phaseKey = $phase ?? 'any';
 
+                $price = intval($order['price']) / 100;
+                $key = $floatKey . '|' . $seedKey . '|' . $phaseKey;
+//                dd($key);
                 if (!isset($groups[$key]) || $price > $groups[$key]['target_max_price_usd']) {
                     $groups[$key] = [
                         'floatPartValue' => $float,
