@@ -18,7 +18,7 @@ class UserWatchlistItemFactory extends Factory
             'title' => $this->faker->words(3, true),
             'item_id' => (string) $this->faker->numberBetween(100000, 999999),
             'active' => true,
-            'filters' => [],
+            'filters' => json_encode([]),
         ];
     }
 }

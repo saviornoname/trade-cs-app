@@ -37,7 +37,7 @@ watch(
 
 <template>
     <div v-if="show" class="fixed inset-0 flex items-center justify-center bg-black/50">
-        <div class="rounded bg-white p-4">
+        <div class="rounded bg-white p-4 text-black dark:bg-neutral-800 dark:text-white">
             <h2 class="mb-2 font-bold">Filters</h2>
             <table class="mb-2 border text-sm">
                 <thead>

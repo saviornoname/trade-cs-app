@@ -13,7 +13,8 @@ class UserWatchlistController extends Controller
 {
     public function index(Request $request)
     {
-        $user = $request->user() ?: User::first();
+//        $user = $request->user() ?: User::first();
+        $user = User::first();
 
         $query = $user->watchlistItems();
 

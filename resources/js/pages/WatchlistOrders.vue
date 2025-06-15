@@ -24,7 +24,7 @@ const activeOnly = ref(true);
 const comparisons = ref<any[]>([]);
 const filterItemId = ref<number | null>(null);
 const compareFilters = reactive({ float: '', seed: '', phase: '' });
-const sortKey = ref<'target_max_price_usd' | 'profit_percent'>('target_max_price_usd');
+const sortKey = ref<'target_max_price_usd' | 'profit_percent' | 'profit_usd'>('profit_usd');
 const sortAsc = ref(false);
 const comparePage = ref(1);
 const comparePerPage = 20;
@@ -152,12 +152,18 @@ const submit = async () => {
 
 const displayComparisons = computed(() => {
     let arr = comparisons.value.map((c) => {
-        const minMarket = Array.isArray(c.market_min_prices_usd) && c.market_min_prices_usd.length ? Math.min(...c.market_min_prices_usd) : null;
-        const profit =
+        const minMarket = Array.isArray(c.market_min_prices_usd) && c.market_min_prices_usd.length
+            ? Math.min(...c.market_min_prices_usd)
+            : null;
+        const profitUsd =
             minMarket !== null && c.target_max_price_usd !== undefined && c.target_max_price_usd !== null
-                ? ((c.target_max_price_usd - minMarket) / minMarket) * 100
+                ? minMarket - c.target_max_price_usd
                 : null;
-        return { ...c, minMarket, profit_percent: profit };
+        const profitPercent =
+            profitUsd !== null && c.target_max_price_usd
+                ? (profitUsd / c.target_max_price_usd) * 100
+                : null;
+        return { ...c, minMarket, profit_usd: profitUsd, profit_percent: profitPercent };
     });
 
     if (compareFilters.float) arr = arr.filter((c) => String(c.floatPartValue) === compareFilters.float);
@@ -263,6 +269,7 @@ const displayComparisons = computed(() => {
             </select>
             <select v-model="sortKey" class="rounded border px-2 py-1">
                 <option value="target_max_price_usd">Target Max $</option>
+                <option value="profit_usd">Profit $</option>
                 <option value="profit_percent">Profit %</option>
             </select>
             <button @click="sortAsc = !sortAsc" class="rounded border px-2">Sort {{ sortAsc ? '↑' : '↓' }}</button>
@@ -277,6 +284,7 @@ const displayComparisons = computed(() => {
                 <th class="border px-2 py-1">Phase</th>
                 <th class="border px-2 py-1">Market Min $ (3)</th>
                 <th class="border px-2 py-1">Target Max $</th>
+                <th class="border px-2 py-1">Profit $</th>
                 <th class="border px-2 py-1">Profit %</th>
             </tr>
             </thead>
@@ -293,6 +301,7 @@ const displayComparisons = computed(() => {
                     <span v-else>-</span>
                 </td>
                 <td class="border px-2 py-1 text-right">{{ c.target_max_price_usd ?? '-' }}</td>
+                <td class="border px-2 py-1 text-right">{{ c.profit_usd !== null ? c.profit_usd.toFixed(2) : '-' }}</td>
                 <td class="border px-2 py-1 text-right">{{ c.profit_percent !== null ? c.profit_percent.toFixed(2) + '%' : '-' }}</td>
             </tr>
             </tbody>
