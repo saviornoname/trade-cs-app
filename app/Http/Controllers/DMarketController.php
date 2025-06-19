@@ -177,7 +177,7 @@ class DMarketController extends Controller
 
                 $price = intval($order['price']) / 100;
                 $key = $floatKey.'|'.$seedKey.'|'.$phaseKey;
-                //                dd($key);
+
                 if (! isset($groups[$key]) || $price > $groups[$key]['target_max_price_usd']) {
                     $groups[$key] = [
                         'floatPartValue' => $float,
