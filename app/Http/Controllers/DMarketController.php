@@ -202,6 +202,7 @@ class DMarketController extends Controller
                 if ($group['phase'] !== 'any') {
                     $filters[] = 'phase[]='.$group['phase'];
                 }
+                $filters[] = 'category_0[]=not_stattrak_tm';
 
                 $params = [
                     'side' => 'market',
@@ -215,6 +216,7 @@ class DMarketController extends Controller
                     'myFavorites' => 'false',
                     'limit' => 3,
                     'currency' => 'USD',
+                    'category_0'=>["not_stattrak_tm"]
                 ];
 
                 $params['treeFilters'] = $filters ? implode(',', $filters) : '';

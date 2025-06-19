@@ -121,10 +121,10 @@ class DMarketService
 
     public function getMarketItems(array $params): ?array
     {
+
         try {
             $url = $this->buildUrl('/exchange/v1/market/items');
             $response = Http::acceptJson()->get($url, $params);
-
             if ($response->failed()) {
                 Log::error("DMarket market items error [{$url}]: {$response->status()}", [
                     'body' => $response->body(),
