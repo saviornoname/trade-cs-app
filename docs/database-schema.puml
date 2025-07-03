@@ -1,0 +1,131 @@
+@startuml
+' Database schema for trading bot
+' This diagram covers main tables and relations
+hide circle
+skinparam linetype ortho
+
+entity items {
+    *id : bigint
+    --
+    name : string
+    slug : string
+    dmarket_id : string
+    buff_id : string
+}
+
+entity dmarket_targets {
+    *id : bigint
+    user_id : bigint
+    title : string
+    price : bigint
+    amount : int
+    float_part_value : string
+    paint_seed : string
+    phase : string
+    is_active : boolean
+}
+
+dmarket_targets ||--o{ users : "user"
+
+entity user_active_targets {
+    *id : bigint
+    user_id : bigint
+    title : string
+    price : bigint
+    amount : int
+    float_part_value : string
+    paint_seed : string
+    phase : string
+    marketplace : enum
+    is_active : boolean
+}
+
+user_active_targets ||--|| users : "user"
+
+entity user_watchlist_items {
+    *id : bigint
+    user_id : bigint
+    title : string
+    item_id : string
+    active : boolean
+}
+
+user_watchlist_items ||--|| users : "user"
+
+entity watchlist_item_filters {
+    *id : bigint
+    user_watchlist_item_id : bigint
+    min_float : decimal
+    max_float : decimal
+    paint_seed : string
+    phase : string
+}
+
+watchlist_item_filters }o--|| user_watchlist_items : "item"
+
+entity buff_offers {
+    *id : bigint
+    goods_id : bigint
+    price_cny : decimal
+    price_usd : decimal
+    amount : int
+    buff_user_id : string
+    min_float : decimal
+    max_float : decimal
+    buff_created_at : timestamp
+}
+
+entity deals {
+    *id : bigint
+    item_id : bigint
+    dmarket_price : decimal
+    buff_price : decimal
+    profit : decimal
+    detected_at : timestamp
+}
+
+items ||--o{ deals : "item"
+
+entity d_market_histories {
+    *id : bigint
+    item_id : bigint
+    price_usd : decimal
+    quantity : int
+    snapshot_at : timestamp
+}
+
+items ||--o{ d_market_histories : "item"
+
+entity price_snapshots {
+    *id : bigint
+    item_id : bigint
+    marketplace : enum
+    price_usd : decimal
+    quantity : int
+    snapshot_at : timestamp
+}
+
+items ||--o{ price_snapshots : "item"
+
+entity market_diffs {
+    *id : bigint
+    item_id : bigint
+    dmarket_price_usd : decimal
+    buff_price_usd : decimal
+    diff_percent : decimal
+    calculated_at : timestamp
+}
+
+items ||--o{ market_diffs : "item"
+
+entity notification_logs {
+    *id : bigint
+    user_id : bigint
+    type : string
+    message : text
+    data : json
+    is_read : boolean
+}
+
+users ||--o{ notification_logs : "notifications"
+@enduml
