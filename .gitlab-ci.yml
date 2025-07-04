@@ -11,10 +11,10 @@ deploy:
     - mkdir -p ~/.ssh
     - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
     - chmod 600 ~/.ssh/id_ed25519
-    - ssh-keyscan -H YOUR_SERVER_IP >> ~/.ssh/known_hosts
+    - ssh-keyscan -H 165.232.75.3 >> ~/.ssh/known_hosts
   script:
-    - rsync -az --exclude='.git' --exclude='node_modules' --exclude='vendor' ./ root@YOUR_SERVER_IP:/var/www/laravel-app
-    - ssh root@YOUR_SERVER_IP <<EOF
+    - rsync -az --exclude='.git' --exclude='node_modules' --exclude='vendor' ./ root@165.232.75.3:/var/www/laravel-app
+    - ssh root@165.232.75.3 <<EOF
       cd /var/www/laravel-app
       composer install --no-interaction --prefer-dist --optimize-autoloader
       php artisan migrate --force
