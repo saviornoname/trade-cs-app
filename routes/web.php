@@ -11,7 +11,7 @@ Route::get('/', function () {
 // Dashboard
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware([])->name('dashboard');
 
 require __DIR__.'/watchlist.php';
 require __DIR__.'/dmarket.php';
