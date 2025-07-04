@@ -18,8 +18,6 @@ deploy:
     - rsync -az --delete --exclude='.git' --exclude='node_modules' ./ root@165.232.75.3:/var/www/laravel-app
     - ssh root@165.232.75.3 '
       cd /var/www/laravel-app &&
-      curl -sS https://getcomposer.org/installer | php &&
-      mv composer.phar /usr/local/bin/composer &&
       composer install --no-interaction --prefer-dist --optimize-autoloader &&
       php artisan key:generate || true &&
       php artisan migrate --force &&
