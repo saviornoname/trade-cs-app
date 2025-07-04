@@ -16,7 +16,7 @@ deploy:
     - ssh-keyscan -H 165.232.75.3 >> ~/.ssh/known_hosts
   script:
     - rsync -az --delete --exclude='.git' --exclude='node_modules' ./ root@165.232.75.3:/var/www/laravel-app
-    - ssh root@165.232.75.3 "
+    - ssh root@165.232.75.3 '
       cd /var/www/laravel-app &&
       curl -sS https://getcomposer.org/installer | php &&
       mv composer.phar /usr/local/bin/composer &&
@@ -29,4 +29,4 @@ deploy:
       chown -R www-data:www-data /var/www/laravel-app &&
       chmod -R 755 /var/www/laravel-app &&
       php artisan queue:restart || true
-      "
+      '
