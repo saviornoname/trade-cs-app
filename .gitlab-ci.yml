@@ -22,3 +22,4 @@ deploy:
     - ssh root@165.232.75.3 "cd /var/www/laravel-app && php artisan migrate --force && php artisan config:cache && php artisan route:cache && php artisan storage:link || true"
     - ssh root@165.232.75.3 "chown -R www-data:www-data /var/www/laravel-app && chmod -R 755 /var/www/laravel-app"
     - ssh root@165.232.75.3 "cd /var/www/laravel-app && php artisan queue:restart || true"
+
