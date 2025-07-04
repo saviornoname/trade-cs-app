@@ -1,11 +1,27 @@
 stages:
+  - build
   - deploy
+
+build:
+  stage: build
+  image: node:20-alpine
+  only:
+    - main
+  script:
+    - npm ci
+    - npm run build
+  artifacts:
+    paths:
+      - public/build
+    expire_in: 1 hour
 
 deploy:
   stage: deploy
   image: php:8.2-alpine
   only:
     - main
+  dependencies:
+    - build
   before_script:
     - apk add --no-cache openssh git rsync unzip curl
     - curl -sS https://getcomposer.org/installer | php
@@ -22,4 +38,3 @@ deploy:
     - ssh root@165.232.75.3 "cd /var/www/laravel-app && php artisan migrate --force && php artisan config:cache && php artisan route:cache && php artisan storage:link || true"
     - ssh root@165.232.75.3 "chown -R www-data:www-data /var/www/laravel-app && chmod -R 755 /var/www/laravel-app"
     - ssh root@165.232.75.3 "cd /var/www/laravel-app && php artisan queue:restart || true"
-
