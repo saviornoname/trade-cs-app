@@ -8,8 +8,6 @@ deploy:
     - main
   before_script:
     - apk add --no-cache openssh git rsync unzip curl
-    - curl -sS https://getcomposer.org/installer | php
-    - mv composer.phar /usr/local/bin/composer
     - mkdir -p ~/.ssh
     - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
     - chmod 600 ~/.ssh/id_ed25519
