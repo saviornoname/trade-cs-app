@@ -21,8 +21,6 @@ deploy:
       curl -sS https://getcomposer.org/installer | php &&
       mv composer.phar /usr/local/bin/composer &&
       composer install --no-interaction --prefer-dist --optimize-autoloader &&
-      npm ci &&
-      npm run build &&
       cp .env.example .env || true &&
       php artisan key:generate || true &&
       php artisan migrate --force &&
