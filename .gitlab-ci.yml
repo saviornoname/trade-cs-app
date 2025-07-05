@@ -25,10 +25,6 @@ deploy:
     - ssh root@165.232.75.3 '
       cd /var/www/laravel-app &&
       composer install --no-interaction --prefer-dist --optimize-autoloader &&
-      if ! command -v npm &> /dev/null; then
-      curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&
-      apt install -y nodejs ;
-      fi &&
       npm install &&
       npm run build &&
       php artisan key:generate || true &&
