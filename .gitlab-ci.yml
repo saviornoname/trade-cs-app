@@ -1,6 +1,22 @@
 stages:
+  - build
   - deploy
 
+# === STAGE 1: BUILD ===
+build:
+  stage: build
+  image: node:20-alpine
+  only:
+    - main
+  script:
+    - npm ci
+    - npm run build
+  artifacts:
+    paths:
+      - public/build
+    expire_in: 1 hour
+
+# === STAGE 2: DEPLOY ===
 deploy:
   stage: deploy
   image: php:8.2-alpine
@@ -19,14 +35,10 @@ deploy:
       --exclude='node_modules'
       --exclude='.env'
       --exclude='storage/'
-      --exclude='public/build/'
       ./ root@165.232.75.3:/var/www/laravel-app
     - ssh root@165.232.75.3 '
       cd /var/www/laravel-app &&
       composer install --no-interaction --prefer-dist --optimize-autoloader &&
-      apk add --no-cache nodejs npm &&
-      npm install &&
-      npm run build &&
       php artisan key:generate || true &&
       php artisan migrate --force &&
       php artisan config:cache &&
