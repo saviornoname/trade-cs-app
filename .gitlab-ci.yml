@@ -24,6 +24,9 @@ deploy:
     - ssh root@165.232.75.3 '
       cd /var/www/laravel-app &&
       composer install --no-interaction --prefer-dist --optimize-autoloader &&
+      apk add --no-cache nodejs npm &&
+      npm install &&
+      npm run build &&
       php artisan key:generate || true &&
       php artisan migrate --force &&
       php artisan config:cache &&
@@ -33,4 +36,3 @@ deploy:
       chmod -R 755 /var/www/laravel-app &&
       php artisan queue:restart || true
       '
-
