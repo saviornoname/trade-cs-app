@@ -10,6 +10,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $schedule->command('watchlist:check-prices')->hourly();
+        $schedule->command('dmarket:sync-orders')->everyFifteenMinutes();
     }
 
     protected function commands(): void
