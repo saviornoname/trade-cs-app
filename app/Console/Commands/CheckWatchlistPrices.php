@@ -30,7 +30,7 @@ class CheckWatchlistPrices extends Command
 
             $min = null;
             foreach ($orders as $order) {
-                $this->line(json_encode($order, JSON_PRETTY_PRINT));
+//                $this->line(json_encode($order, JSON_PRETTY_PRINT));
 
                 if (!isset($order['price'])) {
                     continue;
