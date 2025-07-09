@@ -24,7 +24,7 @@ class CheckWatchlistPrices extends Command
             $this->line("➡️ Перевіряю: {$item->title}");
 
             $data = $dmarket->getMarketTargets('a8db', $item->title);
-            $this->line(json_encode($data, JSON_PRETTY_PRINT));
+//            $this->line(json_encode($data, JSON_PRETTY_PRINT));
 
             $orders = $data['orders'] ?? [];
 
