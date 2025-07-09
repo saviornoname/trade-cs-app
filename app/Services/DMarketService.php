@@ -5,7 +5,8 @@ namespace App\Services;
 use App\Models\ApiCredential;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-
+use App\Models\PaintwearRange;
+use App\Models\UserWatchlistItem;
 class DMarketService
 {
     protected string $baseUrl = 'https://api.dmarket.com/';
@@ -143,5 +144,150 @@ class DMarketService
         $dmarketItems = $this->getMarketTargets($filters['gameId'] ?? 'a8db', $filters['title'] ?? '');
         // TODO: реалізувати логіку порівняння
         return $dmarketItems;
+    }
+    public function getMarketComparisons(string $gameId = 'a8db'): array
+    {
+        $watchItems = UserWatchlistItem::where('active', true)->get();
+
+        $result = [];
+
+        foreach ($watchItems as $item) {
+            $targetsData = $this->getMarketTargets($gameId, $item->title);
+            $orders = $targetsData['orders'] ?? [];
+            $groups = [];
+            $filterSets = $item->filters()->get();
+
+            foreach ($orders as $order) {
+                if (!isset($order['price'])) {
+                    continue;
+                }
+
+                $float = $this->normalizeFloat($order['attributes']['floatPartValue'] ?? null);
+                $seed = $order['attributes']['paintSeed'] ?? null;
+                $phase = $order['attributes']['phase'] ?? null;
+
+                if ($filterSets->isNotEmpty()) {
+                    $matched = false;
+                    foreach ($filterSets as $f) {
+                        $ok = true;
+                        if ($f->phase !== null && $phase !== $f->phase) {
+                            $ok = false;
+                        }
+                        if ($f->min_float !== null) {
+                            if ($float === null || $float <= floatval($f->min_float)) {
+                                $ok = false;
+                            }
+                        }
+                        if ($f->max_float !== null) {
+                            if ($float === null || $float >= floatval($f->max_float)) {
+                                $ok = false;
+                            }
+                        }
+
+                        if ($ok) {
+                            $matched = true;
+                            break;
+                        }
+                    }
+
+                    if (!$matched) {
+                        continue;
+                    }
+                }
+
+                $floatKey = $float ?? 'any';
+                $seedKey = $seed ?? 'any';
+                $phaseKey = $phase ?? 'any';
+
+                $price = intval($order['price']) / 100;
+                $key = $floatKey.'|'.$seedKey.'|'.$phaseKey;
+
+                if (!isset($groups[$key]) || $price > $groups[$key]['target_max_price_usd']) {
+                    $groups[$key] = [
+                        'floatPartValue' => $float,
+                        'paintSeed' => $seed,
+                        'phase' => $phase,
+                        'target_max_price_usd' => $price,
+                    ];
+                }
+            }
+
+            foreach ($groups as &$group) {
+                $filters = [];
+                if ($group['floatPartValue'] !== 'any') {
+                    $range = $this->getPaintwearRange($group['floatPartValue']);
+                    if ($range['min'] !== null) {
+                        $filters[] = sprintf('floatValueFrom[]=%s,floatValueTo[]=%s', $range['min'], $range['max']);
+                    }
+                }
+                if ($group['paintSeed'] !== 'any') {
+                    $filters[] = 'paintSeed[]='.$group['paintSeed'];
+                }
+                if ($group['phase'] !== 'any') {
+                    $filters[] = 'phase[]='.$group['phase'];
+                }
+                $filters[] = 'category_0[]=not_stattrak_tm';
+
+                $params = [
+                    'side' => 'market',
+                    'orderBy' => 'price',
+                    'orderDir' => 'asc',
+                    'title' => $item->title,
+                    'priceFrom' => 0,
+                    'priceTo' => 0,
+                    'gameId' => $gameId,
+                    'types' => 'dmarket',
+                    'myFavorites' => 'false',
+                    'limit' => 3,
+                    'currency' => 'USD',
+                    'category_0'=>["not_stattrak_tm"]
+                ];
+
+                $params['treeFilters'] = $filters ? implode(',', $filters) : '';
+
+                $marketData = $this->getMarketItems($params);
+                $objects = $marketData['objects'] ?? [];
+
+                $prices = [];
+                foreach ($objects as $obj) {
+                    if (isset($obj['price']['USD'])) {
+                        $prices[] = intval($obj['price']['USD']) / 100;
+                    }
+                }
+
+                $group['market_min_prices_usd'] = $prices;
+                $group['title'] = $item->title;
+
+                $result[] = $group;
+            }
+        }
+
+        return $result;
+    }
+
+    private function getPaintwearRange(?string $floatPartValue): array
+    {
+        if ($floatPartValue === null) {
+            return ['min' => null, 'max' => null];
+        }
+
+        $range = PaintwearRange::where('name', $floatPartValue)->first();
+
+        return $range ? ['min' => $range->min, 'max' => $range->max] : ['min' => null, 'max' => null];
+    }
+
+    private function normalizeFloat(?string $floatPartValue): ?float
+    {
+        if ($floatPartValue === null) {
+            return null;
+        }
+
+        if (is_numeric($floatPartValue)) {
+            return floatval($floatPartValue);
+        }
+
+        $range = PaintwearRange::where('name', $floatPartValue)->first();
+
+        return $range ? ($range->min + $range->max) / 2 : null;
     }
 }
