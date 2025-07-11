@@ -11,6 +11,8 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command('watchlist:check-prices')->hourly();
         $schedule->command('dmarket:sync-orders')->everyFifteenMinutes();
+        $schedule->command('app:update-target-orders')->everyMinute();
+
     }
 
     protected function commands(): void
