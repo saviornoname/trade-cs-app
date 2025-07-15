@@ -12,6 +12,9 @@ Route::get('/', function () {
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware([])->name('dashboard');
+Route::get('/dashboard/watchlist/prices', fn () => Inertia::render('WatchlistCheckPrices'))
+    ->name('dashboard.watchlist.prices');
+
 
 require __DIR__.'/watchlist.php';
 require __DIR__.'/dmarket.php';
