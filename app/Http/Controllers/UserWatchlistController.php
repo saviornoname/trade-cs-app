@@ -13,10 +13,11 @@ class UserWatchlistController extends Controller
 {
     public function index(Request $request)
     {
+//
 //        $user = $request->user() ?: User::first();
         $user = User::first();
 
-        $query = $user->watchlistItems();
+        $query = $user->watchlistItems()->with('filters');
 
         if ($request->boolean('active')) {
             $query->where('active', true);
@@ -39,7 +40,7 @@ class UserWatchlistController extends Controller
 
         // Зберігаємо файл у public disk (тобто storage/app/public/uploads)
         $path = $request->file('csv_file')->store('uploads', 'public');
-        Log::info('Файл збережено за шляхом: '.$path);
+        Log::info('Файл збережено за шляхом: ' . $path);
 
         // Використовуємо storage_path з префіксом "app/public"
         $csv = Reader::createFromPath(storage_path("app/public/{$path}"), 'r');
@@ -47,7 +48,7 @@ class UserWatchlistController extends Controller
         $csv->setHeaderOffset(0);
 
         $user = $request->user();
-        if (! $user) {
+        if (!$user) {
             $user = User::inRandomOrder()->first();
         }
         $importedIds = [];
@@ -71,7 +72,7 @@ class UserWatchlistController extends Controller
 
     public function toggleActive(Request $request, UserWatchlistItem $item)
     {
-        $item->active = ! $item->active;
+        $item->active = !$item->active;
 
         $item->save();
 
@@ -116,6 +117,15 @@ class UserWatchlistController extends Controller
         $filter = $item->filters()->create($data);
 
         return response()->json($filter, 201);
+    }
+
+    public function destroy(UserWatchlistItem $item)
+    {
+        $item->filters()->delete();
+        $item->priceChecks()->delete();
+        $item->delete();
+
+        return response()->json(['status' => 'ok']);
     }
 
     public function deleteFilter(WatchlistItemFilter $filter)

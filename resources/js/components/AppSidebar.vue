@@ -5,7 +5,7 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, DollarSign, Folder, LayoutGrid } from 'lucide-vue-next';
+import { BookOpen, DollarSign, Folder, LayoutGrid, List } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const mainNavItems: NavItem[] = [
@@ -19,6 +19,11 @@ const mainNavItems: NavItem[] = [
         href: '/dashboard/watchlist/prices',
         icon: DollarSign,
     },
+    {
+        title: 'Watchlist Items',
+        href: '/dashboard/watchlist',
+        icon: List,
+    },
 ];
 
 const footerNavItems: NavItem[] = [
@@ -31,6 +36,11 @@ const footerNavItems: NavItem[] = [
         title: 'Documentation',
         href: 'https://laravel.com/docs/starter-kits#vue',
         icon: BookOpen,
+    },
+    {
+        title: 'Watchlist Items',
+        href: '/dashboard/watchlist',
+        icon: List,
     },
 ];
 </script>

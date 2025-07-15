@@ -18,7 +18,7 @@ import UserMenuContent from '@/components/UserMenuContent.vue';
 import { getInitials } from '@/composables/useInitials';
 import type { BreadcrumbItem, NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, DollarSign, Folder, LayoutGrid, Menu, Search } from 'lucide-vue-next';
+import { BookOpen, DollarSign, Folder, LayoutGrid, List, Menu, Search } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
@@ -48,6 +48,11 @@ const mainNavItems: NavItem[] = [
         title: 'Watchlist Prices',
         href: '/dashboard/watchlist/prices',
         icon: DollarSign,
+    },
+    {
+        title: 'Watchlist Items',
+        href: '/dashboard/watchlist',
+        icon: List,
     },
 ];
 
