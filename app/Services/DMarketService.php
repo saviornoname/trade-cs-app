@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Models\PaintwearRange;
 use App\Models\UserWatchlistItem;
+
 class DMarketService
 {
     protected string $baseUrl = 'https://api.dmarket.com/';
@@ -103,6 +104,10 @@ class DMarketService
         return $this->sendRequest('GET', $routeForUrl, $query, [], $routeForSign);
     }
 
+    public function getMarketTargetsByTitle(string $title, string $gameId = 'a8db'): ?array
+    {
+        return $this->getMarketTargets($gameId, $title);
+    }
 
 //    public function getUserTargets(string $status = 'TargetStatusActive'): ?array
     public function getUserTargets(string $status = 'TargetStatusInactive'): ?array
@@ -139,12 +144,33 @@ class DMarketService
         }
     }
 
+    public function getMarketItemsByTitle(string $title, array $params = []): ?array
+    {
+        $default = [
+            'side' => 'market',
+            'orderBy' => 'price',
+            'orderDir' => 'asc',
+            'title' => $title,
+            'priceFrom' => 0,
+            'priceTo' => 0,
+            'gameId' => 'a8db',
+            'types' => 'dmarket',
+            'myFavorites' => 'false',
+            'limit' => 3,
+            'currency' => 'USD',
+            'category_0' => ['not_stattrak_tm'],
+        ];
+
+        return $this->getMarketItems(array_merge($default, $params));
+    }
+
     public function compareWithBuff(array $filters = []): ?array
     {
         $dmarketItems = $this->getMarketTargets($filters['gameId'] ?? 'a8db', $filters['title'] ?? '');
         // TODO: реалізувати логіку порівняння
         return $dmarketItems;
     }
+
     public function getMarketComparisons(string $gameId = 'a8db'): array
     {
         $watchItems = UserWatchlistItem::where('active', true)->get();
@@ -200,7 +226,7 @@ class DMarketService
                 $phaseKey = $phase ?? 'any';
 
                 $price = intval($order['price']) / 100;
-                $key = $floatKey.'|'.$seedKey.'|'.$phaseKey;
+                $key = $floatKey . '|' . $seedKey . '|' . $phaseKey;
 
                 if (!isset($groups[$key]) || $price > $groups[$key]['target_max_price_usd']) {
                     $groups[$key] = [
@@ -221,10 +247,10 @@ class DMarketService
                     }
                 }
                 if ($group['paintSeed'] !== 'any') {
-                    $filters[] = 'paintSeed[]='.$group['paintSeed'];
+                    $filters[] = 'paintSeed[]=' . $group['paintSeed'];
                 }
                 if ($group['phase'] !== 'any') {
-                    $filters[] = 'phase[]='.$group['phase'];
+                    $filters[] = 'phase[]=' . $group['phase'];
                 }
                 $filters[] = 'category_0[]=not_stattrak_tm';
 
@@ -240,7 +266,7 @@ class DMarketService
                     'myFavorites' => 'false',
                     'limit' => 3,
                     'currency' => 'USD',
-                    'category_0'=>["not_stattrak_tm"]
+                    'category_0' => ["not_stattrak_tm"]
                 ];
 
                 $params['treeFilters'] = $filters ? implode(',', $filters) : '';
@@ -265,7 +291,7 @@ class DMarketService
         return $result;
     }
 
-    private function getPaintwearRange(?string $floatPartValue): array
+    public function getPaintwearRange(?string $floatPartValue): array
     {
         if ($floatPartValue === null) {
             return ['min' => null, 'max' => null];
@@ -276,7 +302,7 @@ class DMarketService
         return $range ? ['min' => $range->min, 'max' => $range->max] : ['min' => null, 'max' => null];
     }
 
-    private function normalizeFloat(?string $floatPartValue): ?float
+    function normalizeFloat(?string $floatPartValue): ?float
     {
         if ($floatPartValue === null) {
             return null;

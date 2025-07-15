@@ -13,7 +13,9 @@ class UserWatchlistItem extends Model
 
     protected $fillable = [
         'title',
+        'item_id',
         'active',
+        'filters',
     ];
 
     public function user(): BelongsTo
