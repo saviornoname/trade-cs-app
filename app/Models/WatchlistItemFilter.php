@@ -9,8 +9,7 @@ class WatchlistItemFilter extends Model
 {
     protected $fillable = [
         'user_watchlist_item_id',
-        'min_float',
-        'max_float',
+        'paintwear_range_id',
         'paint_seed',
         'phase',
     ];
@@ -18,5 +17,10 @@ class WatchlistItemFilter extends Model
     public function item(): BelongsTo
     {
         return $this->belongsTo(UserWatchlistItem::class, 'user_watchlist_item_id');
+    }
+
+    public function floatRange(): BelongsTo
+    {
+        return $this->belongsTo(PaintwearRange::class, 'paintwear_range_id');
     }
 }

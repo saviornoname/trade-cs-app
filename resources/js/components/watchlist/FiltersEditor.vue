@@ -1,21 +1,14 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-    DialogClose
-} from '@/components/ui/dialog';
 import axios from 'axios';
+import { onMounted, ref, watch } from 'vue';
 import { route } from 'ziggy-js';
 
 interface FloatRange {
     id: number;
-    name: string; // e.g., "0.00 - 0.07"
+    name: string;
 }
 
 interface Filter {
@@ -24,7 +17,7 @@ interface Filter {
     phase: string | null;
 }
 
-defineProps<{
+const { show, itemId } = defineProps<{
     show: boolean;
     itemId: number | null;
 }>();
@@ -45,12 +38,29 @@ const newFilter = ref<Filter>({
 const fetchFloatRanges = async () => {
     try {
         const res = await axios.get(route('float-ranges.list'));
-        console.log(res.data);
         floatRanges.value = res.data;
     } catch (e) {
         console.error('Failed to load float ranges', e);
     }
 };
+
+const fetchExistingFilters = async (id: number) => {
+    try {
+        const res = await axios.get(route('watchlist.filters', { item: id }));
+        filters.value = res.data;
+    } catch (e) {
+        console.error('Failed to load filters', e);
+    }
+};
+
+watch(
+    () => show,
+    (val) => {
+        if (val && itemId !== null) {
+            fetchExistingFilters(itemId);
+        }
+    },
+);
 
 const addFilter = () => {
     filters.value.push({ ...newFilter.value });
@@ -66,15 +76,20 @@ onMounted(fetchFloatRanges);
 </script>
 
 <template>
-    <Dialog :open="show" @update:open="(val) => { if (!val) emit('close') }">
-        <DialogContent class="w-[600px]" aria-describedby="filters-description">
+    <Dialog
+        :open="show"
+        @update:open="
+            (val) => {
+                if (!val) emit('close');
+            }
+        "
+    >
+        <DialogContent class="w-[600px]">
+            <!-- ✅ aria-describedby на реальному DOM-елементі -->
             <DialogHeader>
                 <DialogTitle>Filters</DialogTitle>
             </DialogHeader>
-
-            <p id="filters-description" class="text-sm text-muted-foreground mb-2">
-                Select a predefined float range, seed, or phase to add a new filter.
-            </p>
+            <DialogDescription>Select a predefined float range, seed, or phase to add a new filter.</DialogDescription>
 
             <div class="space-y-2">
                 <div class="flex gap-2">
@@ -91,14 +106,10 @@ onMounted(fetchFloatRanges);
                 </div>
 
                 <div v-if="filters.length > 0" class="space-y-1 text-sm">
-                    <div
-                        v-for="(filter, index) in filters"
-                        :key="index"
-                        class="flex gap-2 items-center border px-2 py-1 rounded bg-muted"
-                    >
-            <span v-if="filter.float_range_id">
-              Float: {{ floatRanges.find(fr => fr.id === filter.float_range_id)?.label || '—' }}
-            </span>
+                    <div v-for="(filter, index) in filters" :key="index" class="bg-muted flex items-center gap-2 rounded border px-2 py-1">
+                        <span v-if="filter.float_range_id">
+                            Float: {{ floatRanges.find((fr) => fr.id === filter.float_range_id)?.name || '—' }}
+                        </span>
                         <span v-if="filter.paint_seed">Seed: {{ filter.paint_seed }}</span>
                         <span v-if="filter.phase">Phase: {{ filter.phase }}</span>
                     </div>

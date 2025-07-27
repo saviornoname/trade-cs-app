@@ -126,7 +126,7 @@ const filterText = (filters: Filter[]) => {
                             </div>
                         </td>
                         <td class="border px-2 py-1 text-center space-x-1">
-                            <Button size="sm" variant="outline" @click="filterItemId = item.id">Edit</Button>
+                            <Button size="sm" variant="outline" @click="filterItemId = item.id" aria-description="dialog-description">Edit</Button>
                             <Button size="sm" variant="destructive" @click="deleteItemId = item.id">Delete</Button>
                         </td>
                     </tr>
