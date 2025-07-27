@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import FiltersModal from '@/components/FiltersModal.vue';
 import FiltersEditor from '@/components/watchlist/FiltersEditor.vue';
 
 import AppLayout from '@/layouts/AppLayout.vue';
