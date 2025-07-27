@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import FiltersModal from '@/components/FiltersModal.vue';
+import FiltersEditor from '@/components/watchlist/FiltersEditor.vue';
+
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -35,11 +37,11 @@ const search = ref('');
 const activeOnly = ref(false);
 const currentPage = ref(1);
 const totalPages = ref(1);
-const perPage = 10;
+const perPage = 15;
 const filterItemId = ref<number | null>(null);
 const deleteItemId = ref<number | null>(null);
 
-const loadItems = async (append = false) => {
+const loadItems = async () => {
     const res = await axios.get(route('watchlist.items'), {
         params: {
             page: currentPage.value,
@@ -48,23 +50,20 @@ const loadItems = async (append = false) => {
             active: activeOnly.value ? 1 : 0,
         },
     });
-    if (append) {
-        items.value = [...items.value, ...res.data.data];
-    } else {
-        items.value = res.data.data;
-    }
+    items.value = res.data.data.map((item: any) => ({ ...item, active: !!item.active }));
     totalPages.value = res.data.last_page;
 };
 
-const loadMore = async () => {
-    if (currentPage.value >= totalPages.value) return;
-    currentPage.value += 1;
-    await loadItems(true);
-};
-
 const toggleActive = async (item: Item) => {
-    await axios.patch(route('watchlist.toggle', { item: item.id }));
-    item.active = !item.active;
+    try {
+        const newStatus = !item.active;
+        await axios.patch(route('watchlist.toggle', { item: item.id }), { active: newStatus ? 1 : 0 });
+        items.value = items.value.map((i) =>
+            i.id === item.id ? { ...i, active: newStatus } : i
+        );
+    } catch (error) {
+        console.error('Toggle failed', error);
+    }
 };
 
 const deleteItem = async () => {
@@ -101,7 +100,7 @@ const filterText = (filters: Filter[]) => {
             <div class="flex items-center gap-2">
                 <Input v-model="search" placeholder="Search..." class="max-w-xs" />
                 <label class="flex items-center gap-1 text-sm">
-                    <Checkbox v-model:checked="activeOnly" /> Active only
+                    <Checkbox v-model="activeOnly" /> Active only
                 </label>
             </div>
             <div class="overflow-auto">
@@ -119,7 +118,12 @@ const filterText = (filters: Filter[]) => {
                         <td class="border px-2 py-1">{{ item.title }}</td>
                         <td class="border px-2 py-1">{{ filterText(item.filters) }}</td>
                         <td class="border px-2 py-1 text-center">
-                            <Checkbox :checked="item.active" @update:checked="toggleActive(item)" />
+                            <div class="flex items-center justify-center gap-2">
+                                <Checkbox v-model="item.active" @click="toggleActive(item)" />
+                                <span class="text-xs" :class="item.active ? 'text-green-600' : 'text-gray-500'">
+                                    {{ item.active ? 'Active' : 'Inactive' }}
+                                </span>
+                            </div>
                         </td>
                         <td class="border px-2 py-1 text-center space-x-1">
                             <Button size="sm" variant="outline" @click="filterItemId = item.id">Edit</Button>
@@ -130,12 +134,12 @@ const filterText = (filters: Filter[]) => {
                 </table>
             </div>
             <div class="flex items-center gap-2">
-                <Button size="sm" variant="outline" @click="currentPage = Math.max(1, currentPage - 1); loadItems();">Prev</Button>
+                <Button size="sm" variant="outline" :disabled="currentPage <= 1" @click="() => { currentPage--; loadItems(); }">Prev</Button>
                 <span>Page {{ currentPage }} / {{ totalPages }}</span>
-                <Button v-if="currentPage < totalPages" size="sm" variant="outline" @click="loadMore">Load more</Button>
+                <Button size="sm" variant="outline" :disabled="currentPage >= totalPages" @click="() => { currentPage++; loadItems(); }">Next</Button>
             </div>
         </div>
-        <FiltersModal :show="filterItemId !== null" :item-id="filterItemId" @close="filterItemId = null; loadItems();" />
+        <FiltersEditor :show="filterItemId !== null" :item-id="filterItemId" @close="filterItemId = null" @save="(newFilters) => console.log(newFilters)" />
         <Dialog :open="deleteItemId !== null" @update:open="val => { if(!val) deleteItemId = null }">
             <DialogContent>
                 <DialogHeader>
