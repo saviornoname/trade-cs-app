@@ -12,6 +12,11 @@ class WatchlistItemFilter extends Model
         'paintwear_range_id',
         'paint_seed',
         'phase',
+        'active',
+    ];
+
+    protected $casts = [
+        'active' => 'boolean',
     ];
 
     public function item(): BelongsTo

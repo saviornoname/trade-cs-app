@@ -102,7 +102,7 @@ class UserWatchlistController extends Controller
 
     public function filters(UserWatchlistItem $item)
     {
-        return response()->json($item->filters()->get());
+        return response()->json($item->filters()->with('floatRange')->get());
     }
 
     public function addFilter(Request $request, UserWatchlistItem $item)
@@ -119,22 +119,18 @@ class UserWatchlistController extends Controller
     }
 
 
-    public function updateFilters(Request $request, UserWatchlistItem $item)
+    public function updateFilter(Request $request, WatchlistItemFilter $filter)
     {
         $data = $request->validate([
-            'filters' => 'array',
-            'filters.*.paintwear_range_id' => 'nullable|integer|exists:paintwear_ranges,id',
-            'filters.*.phase' => 'nullable|string',
-            'filters.*.paint_seed' => 'nullable|string',
+            'paintwear_range_id' => 'nullable|integer|exists:paintwear_ranges,id',
+            'phase' => 'nullable|string',
+            'paint_seed' => 'nullable|string',
+            'active' => 'nullable|boolean',
         ]);
 
-        $item->filters()->delete();
+        $filter->update($data);
 
-        foreach ($data['filters'] as $filter) {
-            $item->filters()->create($filter);
-        }
-
-        return response()->json(['status' => 'ok']);
+        return response()->json($filter->fresh('floatRange'));
     }
 
 
