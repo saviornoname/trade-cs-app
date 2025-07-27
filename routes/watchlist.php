@@ -37,6 +37,9 @@ Route::get('/watchlist/items/{item}/filters', [UserWatchlistController::class, '
 Route::post('/watchlist/items/{item}/filters', [UserWatchlistController::class, 'addFilter'])
     ->name('watchlist.filters.add');
 
+Route::put('/watchlist/items/{item}/filters', [UserWatchlistController::class, 'updateFilters'])
+    ->name('watchlist.filters.update');
+
 Route::delete('/watchlist/filters/{filter}', [UserWatchlistController::class, 'deleteFilter'])
     ->name('watchlist.filters.delete');
 

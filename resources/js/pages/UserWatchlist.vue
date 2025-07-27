@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import FiltersEditor from '@/components/watchlist/FiltersEditor.vue';
 
-import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import axios from 'axios';
@@ -57,9 +57,7 @@ const toggleActive = async (item: Item) => {
     try {
         const newStatus = !item.active;
         await axios.patch(route('watchlist.toggle', { item: item.id }), { active: newStatus ? 1 : 0 });
-        items.value = items.value.map((i) =>
-            i.id === item.id ? { ...i, active: newStatus } : i
-        );
+        items.value = items.value.map((i) => (i.id === item.id ? { ...i, active: newStatus } : i));
     } catch (error) {
         console.error('Toggle failed', error);
     }
@@ -98,9 +96,7 @@ const filterText = (filters: Filter[]) => {
         <div class="space-y-4 p-4">
             <div class="flex items-center gap-2">
                 <Input v-model="search" placeholder="Search..." class="max-w-xs" />
-                <label class="flex items-center gap-1 text-sm">
-                    <Checkbox v-model="activeOnly" /> Active only
-                </label>
+                <label class="flex items-center gap-1 text-sm"> <Checkbox v-model="activeOnly" /> Active only </label>
             </div>
             <div class="overflow-auto">
                 <table class="min-w-full text-sm">
@@ -120,12 +116,14 @@ const filterText = (filters: Filter[]) => {
                             <div class="flex items-center justify-center gap-2">
                                 <Checkbox v-model="item.active" @click="toggleActive(item)" />
                                 <span class="text-xs" :class="item.active ? 'text-green-600' : 'text-gray-500'">
-                                    {{ item.active ? 'Active' : 'Inactive' }}
-                                </span>
+                                        {{ item.active ? 'Active' : 'Inactive' }}
+                                    </span>
                             </div>
                         </td>
-                        <td class="border px-2 py-1 text-center space-x-1">
-                            <Button size="sm" variant="outline" @click="filterItemId = item.id" aria-description="dialog-description">Edit</Button>
+                        <td class="space-x-1 border px-2 py-1 text-center">
+                            <Button size="sm" variant="outline" @click="filterItemId = item.id" aria-description="dialog-description"
+                            >Edit</Button
+                            >
                             <Button size="sm" variant="destructive" @click="deleteItemId = item.id">Delete</Button>
                         </td>
                     </tr>
@@ -133,13 +131,47 @@ const filterText = (filters: Filter[]) => {
                 </table>
             </div>
             <div class="flex items-center gap-2">
-                <Button size="sm" variant="outline" :disabled="currentPage <= 1" @click="() => { currentPage--; loadItems(); }">Prev</Button>
+                <Button
+                    size="sm"
+                    variant="outline"
+                    :disabled="currentPage <= 1"
+                    @click="
+                        () => {
+                            currentPage--;
+                            loadItems();
+                        }
+                    "
+                >Prev</Button
+                >
                 <span>Page {{ currentPage }} / {{ totalPages }}</span>
-                <Button size="sm" variant="outline" :disabled="currentPage >= totalPages" @click="() => { currentPage++; loadItems(); }">Next</Button>
+                <Button
+                    size="sm"
+                    variant="outline"
+                    :disabled="currentPage >= totalPages"
+                    @click="
+                        () => {
+                            currentPage++;
+                            loadItems();
+                        }
+                    "
+                >Next</Button
+                >
             </div>
         </div>
-        <FiltersEditor :show="filterItemId !== null" :item-id="filterItemId" @close="filterItemId = null" @save="(newFilters) => console.log(newFilters)" />
-        <Dialog :open="deleteItemId !== null" @update:open="val => { if(!val) deleteItemId = null }">
+        <FiltersEditor
+            :show="filterItemId !== null"
+            :item-id="filterItemId"
+            @close="filterItemId = null"
+            @save="(newFilters) => console.log(newFilters)"
+        />
+        <Dialog
+            :open="deleteItemId !== null"
+            @update:open="
+                (val) => {
+                    if (!val) deleteItemId = null;
+                }
+            "
+        >
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Delete item?</DialogTitle>

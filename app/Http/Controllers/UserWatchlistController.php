@@ -108,8 +108,7 @@ class UserWatchlistController extends Controller
     public function addFilter(Request $request, UserWatchlistItem $item)
     {
         $data = $request->validate([
-            'min_float' => 'nullable|numeric',
-            'max_float' => 'nullable|numeric',
+            'paintwear_range_id' => 'nullable|integer|exists:paintwear_ranges,id',
             'phase' => 'nullable|string',
             'paint_seed' => 'nullable|string',
         ]);
@@ -118,6 +117,26 @@ class UserWatchlistController extends Controller
 
         return response()->json($filter, 201);
     }
+
+
+    public function updateFilters(Request $request, UserWatchlistItem $item)
+    {
+        $data = $request->validate([
+            'filters' => 'array',
+            'filters.*.paintwear_range_id' => 'nullable|integer|exists:paintwear_ranges,id',
+            'filters.*.phase' => 'nullable|string',
+            'filters.*.paint_seed' => 'nullable|string',
+        ]);
+
+        $item->filters()->delete();
+
+        foreach ($data['filters'] as $filter) {
+            $item->filters()->create($filter);
+        }
+
+        return response()->json(['status' => 'ok']);
+    }
+
 
     public function destroy(UserWatchlistItem $item)
     {

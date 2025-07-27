@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import axios from 'axios';
 import { onMounted, ref, watch } from 'vue';
@@ -17,7 +17,7 @@ interface Filter {
     phase: string | null;
 }
 
-const { show, itemId } = defineProps<{
+const props = defineProps<{
     show: boolean;
     itemId: number | null;
 }>();
@@ -53,21 +53,26 @@ const fetchExistingFilters = async (id: number) => {
     }
 };
 
-watch(
-    () => show,
-    (val) => {
-        if (val && itemId !== null) {
-            fetchExistingFilters(itemId);
-        }
-    },
-);
+watch([() => props.show, () => props.itemId], ([val, id]) => {
+    if (val && id !== null) {
+        fetchExistingFilters(id);
+    }
+});
 
 const addFilter = () => {
     filters.value.push({ ...newFilter.value });
     newFilter.value = { float_range_id: null, paint_seed: '', phase: '' };
 };
 
-const saveFilters = () => {
+const saveFilters = async () => {
+    if (props.itemId === null) return;
+    await axios.put(route('watchlist.filters.update', { item: props.itemId }), {
+        filters: filters.value.map((f) => ({
+            paintwear_range_id: f.float_range_id,
+            paint_seed: f.paint_seed,
+            phase: f.phase,
+        })),
+    });
     emit('save', filters.value);
     emit('close');
 };
@@ -77,7 +82,7 @@ onMounted(fetchFloatRanges);
 
 <template>
     <Dialog
-        :open="show"
+        :open="props.show"
         @update:open="
             (val) => {
                 if (!val) emit('close');
