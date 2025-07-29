@@ -118,9 +118,9 @@ class DMarketService
         ];
         return $this->sendRequest('GET', '/marketplace-api/v1/user-targets', $query);
     }
-    public function getUserInventory(string $gameId = 'a8db'): ?array
+    public function getUserInventory(string $gameId = 'a8db', $limit = 1): ?array
     {
-        $query = ['gameId' => $gameId];
+        $query = array_merge(['gameId' => $gameId]);
 
         return $this->sendRequest('GET', '/marketplace-api/v1/user-inventory', $query);
     }
