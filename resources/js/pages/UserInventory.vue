@@ -9,6 +9,7 @@ interface InventoryItem {
     id: string;
     title: string;
     image?: string;
+    gameType?: string;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -27,11 +28,13 @@ const fetchData = async () => {
             axios.get(route('dmarket.inventory')),
             axios.get(route('dmarket.offers')),
         ]);
-        const invItems = invRes.data?.Items ?? invRes.data?.items ?? invRes.data?.data ?? [];
+
+        const invItems = invRes.data.objects;
         inventory.value = invItems.map((it: any) => ({
-            id: it.AssetID ?? it.id ?? it.assetId ?? '',
+            id: it.itemId ?? it.AssetID ?? it.id ?? it.assetId ?? '',
             title: it.Title ?? it.title ?? '',
             image: it.ImageURL ?? it.image,
+            gameType: it.gameType ?? it.GameType ?? '',
         }));
 
         const orders = offersRes.data?.Orders ?? offersRes.data?.orders ?? offersRes.data ?? [];
@@ -59,6 +62,7 @@ onMounted(fetchData);
                     <tr class="bg-muted text-muted-foreground">
                         <th class="border px-2 py-1 text-left">Item</th>
                         <th class="border px-2 py-1 text-left">Status</th>
+                        <th class="border px-2 py-1 text-left">Game Type</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -82,6 +86,7 @@ onMounted(fetchData);
                         <td class="border px-2 py-1">
                             <span v-if="activeIds.has(item.id)">Виставлено на продаж</span>
                         </td>
+                        <td class="border px-2 py-1">{{ item.gameType }}</td>
                     </tr>
                     </tbody>
                 </table>

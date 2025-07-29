@@ -118,11 +118,25 @@ class DMarketService
         ];
         return $this->sendRequest('GET', '/marketplace-api/v1/user-targets', $query);
     }
-    public function getUserInventory(string $gameId = 'a8db', $limit = 1): ?array
+    public function getUserInventory(string $gameId = 'a8db'): ?array
     {
-        $query = array_merge(['gameId' => $gameId]);
+        $query = [
+            'side' => 'user',
+            'orderBy' => 'updated',
+            'orderDir' => 'desc',
+            'title' => '',
+            'priceFrom' => 0,
+            'priceTo' => 0,
+            'treeFilters' => '',
+            'gameId' => $gameId,
+            'statuses' => '',
+            'cursor' => '',
+            'limit' => 100,
+            'currency' => 'USD',
+            'platform' => 'browser',
+        ];
 
-        return $this->sendRequest('GET', '/marketplace-api/v1/user-inventory', $query);
+        return $this->sendRequest('GET', '/exchange/v1/user/items', $query);
     }
 
     public function getUserOffers(string $gameId = 'a8db', array $params = []): ?array

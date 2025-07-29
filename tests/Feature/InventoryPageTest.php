@@ -12,6 +12,7 @@ class InventoryPageTest extends TestCase
 
     public function test_guests_can_view_inventory_page()
     {
+        $this->withoutVite();
         $response = $this->get('/dashboard/inventory');
         $response->assertStatus(200);
     }
@@ -20,6 +21,7 @@ class InventoryPageTest extends TestCase
     {
         $user = User::factory()->create();
         $this->actingAs($user);
+        $this->withoutVite();
         $response = $this->get('/dashboard/inventory');
         $response->assertStatus(200);
     }
