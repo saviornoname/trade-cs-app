@@ -8,6 +8,7 @@ import { onMounted, ref } from 'vue';
 interface InventoryItem {
     id: string;
     title: string;
+    image?: string;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -26,9 +27,17 @@ const fetchData = async () => {
             axios.get(route('dmarket.inventory')),
             axios.get(route('dmarket.offers')),
         ]);
-        inventory.value = invRes.data?.items ?? [];
-        const orders = offersRes.data?.orders ?? [];
-        activeIds.value = new Set(orders.map((o: any) => o.itemId || o.assetId || o.id));
+        const invItems = invRes.data?.Items ?? invRes.data?.items ?? invRes.data?.data ?? [];
+        inventory.value = invItems.map((it: any) => ({
+            id: it.AssetID ?? it.id ?? it.assetId ?? '',
+            title: it.Title ?? it.title ?? '',
+            image: it.ImageURL ?? it.image,
+        }));
+
+        const orders = offersRes.data?.Orders ?? offersRes.data?.orders ?? offersRes.data ?? [];
+        activeIds.value = new Set(
+            orders.map((o: any) => o.ItemID ?? o.itemId ?? o.assetId ?? o.id)
+        );
     } catch (e) {
         console.error('Failed to load inventory', e);
     } finally {
@@ -61,7 +70,15 @@ onMounted(fetchData);
                                 'bg-yellow-100 dark:bg-yellow-900': activeIds.has(item.id),
                             }"
                     >
-                        <td class="border px-2 py-1">{{ item.title }}</td>
+                        <td class="border px-2 py-1 flex items-center gap-2">
+                            <img
+                                v-if="item.image"
+                                :src="item.image"
+                                :alt="item.title"
+                                class="h-8 w-8 object-contain"
+                            />
+                            <span>{{ item.title }}</span>
+                        </td>
                         <td class="border px-2 py-1">
                             <span v-if="activeIds.has(item.id)">Виставлено на продаж</span>
                         </td>
