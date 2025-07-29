@@ -13,3 +13,5 @@ Route::get('/dmarket/targets-market', [DMarketController::class, 'compareTargets
 
 Route::get('/dmarket/json-view', fn () => Inertia::render('DMarketJsonView'))
     ->name('dmarket.json');
+Route::get('/dmarket/inventory', [DMarketController::class, 'getUserInventory'])->name('dmarket.inventory');
+Route::get('/dmarket/offers', [DMarketController::class, 'getUserOffers'])->name('dmarket.offers');

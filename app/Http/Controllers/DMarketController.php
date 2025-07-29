@@ -134,6 +134,20 @@ class DMarketController extends Controller
 
         return $range ? ['min' => $range->min, 'max' => $range->max] : ['min' => null, 'max' => null];
     }
+    public function getUserInventory(Request $request, DMarketService $dmarket)
+    {
+        $gameId = $request->input('gameId', 'a8db');
+
+        return response()->json($dmarket->getUserInventory($gameId));
+    }
+
+    public function getUserOffers(Request $request, DMarketService $dmarket)
+    {
+        $gameId = $request->input('gameId', 'a8db');
+        $params = $request->only(['Status', 'Limit', 'OrderBy', 'OrderDir']);
+
+        return response()->json($dmarket->getUserOffers($gameId, $params));
+    }
 
     private function normalizeFloat(?string $floatPartValue): ?float
     {
