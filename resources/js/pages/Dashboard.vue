@@ -4,6 +4,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import PlaceholderPattern from '../components/PlaceholderPattern.vue';
 import UsefulLinks from '../components/UsefulLinks.vue';
+import TextLink from '@/components/TextLink.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -34,6 +35,9 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
 
             <UsefulLinks class="mt-4" />
+            <div>
+                <TextLink :href="route('dashboard.inventory')">Перейти до інвентаря</TextLink>
+            </div>
         </div>
     </AppLayout>
 </template>

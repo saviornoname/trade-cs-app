@@ -16,10 +16,11 @@ Route::get('/dashboard/watchlist/prices', fn () => Inertia::render('WatchlistChe
     ->name('dashboard.watchlist.prices');
 Route::get('/dashboard/watchlist', fn () => Inertia::render('UserWatchlist'))
     ->name('dashboard.watchlist');
+Route::get('/dashboard/inventory', fn () => Inertia::render('UserInventory'))
+    ->name('dashboard.inventory');
 
 require __DIR__.'/watchlist.php';
 require __DIR__.'/dmarket.php';
 require __DIR__.'/buff.php';
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
-
