@@ -34,7 +34,7 @@ interface Item {
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Watchlist Items', href: '/dashboard/watchlist' }
+    { title: 'Watchlist Items', href: '/dashboard/watchlist' },
 ];
 
 const items = ref<Item[]>([]);
@@ -58,21 +58,21 @@ const loadItems = async () => {
             page: currentPage.value,
             per_page: perPage,
             search: search.value,
-            active: activeOnly.value ? 1 : 0
-        }
+            active: activeOnly.value ? 1 : 0,
+        },
     });
     items.value = res.data.data.map((item: any) => ({
         ...item,
         active: !!item.active,
         filters: Array.isArray(item.filters)
             ? item.filters.map((f: any) => ({
-                id: f.id,
-                paintwear_range_id: f.paintwear_range_id ?? null,
-                paint_seed: f.paint_seed ?? '',
-                phase: f.phase ?? '',
-                active: !!f.active
-            }))
-            : []
+                  id: f.id,
+                  paintwear_range_id: f.paintwear_range_id ?? null,
+                  paint_seed: f.paint_seed ?? '',
+                  phase: f.phase ?? '',
+                  active: !!f.active,
+              }))
+            : [],
     }));
     totalPages.value = res.data.last_page;
 };
@@ -94,10 +94,17 @@ const deleteItem = async () => {
     deleteItemId.value = null;
 };
 
-watch([search, activeOnly], () => {
-    currentPage.value = 1;
-    loadItems();
-});
+watch(
+    [
+        search,
+        activeOnly,
+        // () => items.value.map(i => i.active) // стежимо за змінами item.active
+    ],
+    () => {
+        currentPage.value = 1;
+        loadItems();
+    }
+);
 
 onMounted(() => {
     loadItems();
@@ -118,50 +125,48 @@ const floatRangeName = (id: number | null) => {
                 <Input v-model="search" placeholder="Search..." class="max-w-xs" />
                 <label class="flex items-center gap-1 text-sm">
                     <Checkbox v-model="activeOnly" />
-                    Active only </label>
+                    Active only
+                </label>
             </div>
             <div class="overflow-auto">
                 <table class="min-w-full text-sm">
                     <thead>
-                    <tr class="bg-muted text-muted-foreground">
-                        <th class="border px-2 py-1 text-left">ID</th>
-                        <th class="border px-2 py-1 text-left">Item Name</th>
-                        <th class="border px-2 py-1 text-left">Filters</th>
-                        <th class="border px-2 py-1 text-center">Active</th>
-                        <th class="border px-2 py-1 text-center">Actions</th>
-                    </tr>
+                        <tr class="bg-muted text-muted-foreground">
+                            <th class="border px-2 py-1 text-left">ID</th>
+                            <th class="border px-2 py-1 text-left">Item Name</th>
+                            <th class="border px-2 py-1 text-left">Filters</th>
+                            <th class="border px-2 py-1 text-center">Active</th>
+                            <th class="border px-2 py-1 text-center">Actions</th>
+                        </tr>
                     </thead>
                     <tbody>
-                    <tr v-for="item in items" :key="item.id" class="border-t">
-                        <td class="border px-2 py-1">{{ item.id }}</td>
-                        <td class="border px-2 py-1">{{ item.title }}</td>
-                        <td class="border px-2 py-1">
-                            <div v-if="item.filters.length === 0">—</div>
-                            <div v-for="f in item.filters" :key="f.id" class="mb-1 flex flex-wrap gap-1">
-          <span class="bg-muted rounded border px-1.5 py-0.5">
-  Float: {{ floatRangeName(f.paintwear_range_id) || 'any' }},
-  Seed: {{ f.paint_seed || 'any' }},
-  Phase: {{ f.phase || 'any' }}
-</span>
-                            </div>
-                        </td>
-                        <td class="border px-2 py-1 text-center">
-                            <div class="flex items-center justify-center gap-2">
-                                <Checkbox v-model="item.active" @click="toggleActive(item)" />
-                                <span class="text-xs" :class="item.active ? 'text-green-600' : 'text-gray-500'">
+                        <tr v-for="item in items" :key="item.id" class="border-t">
+                            <td class="border px-2 py-1">{{ item.id }}</td>
+                            <td class="border px-2 py-1">{{ item.title }}</td>
+                            <td class="border px-2 py-1">
+                                <div v-if="item.filters.length === 0">—</div>
+                                <div v-for="f in item.filters" :key="f.id" class="mb-1 flex flex-wrap gap-1">
+                                    <span class="bg-muted rounded border px-1.5 py-0.5">
+                                        Float: {{ floatRangeName(f.paintwear_range_id) || 'any' }}, Seed: {{ f.paint_seed || 'any' }}, Phase:
+                                        {{ f.phase || 'any' }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="border px-2 py-1 text-center">
+                                <div class="flex items-center justify-center gap-2">
+                                    <Checkbox v-model="item.active" @click="toggleActive(item)" />
+                                    <span class="text-xs" :class="item.active ? 'text-green-600' : 'text-gray-500'">
                                         {{ item.active ? 'Active' : 'Inactive' }}
                                     </span>
-                            </div>
-                        </td>
-                        <td class="space-x-1 border px-2 py-1 text-center">
-                            <Button size="sm" variant="outline" @click="filterItemId = item.id"
-                                    aria-description="dialog-description"
-                            >Edit
-                            </Button
-                            >
-                            <Button size="sm" variant="destructive" @click="deleteItemId = item.id">Delete</Button>
-                        </td>
-                    </tr>
+                                </div>
+                            </td>
+                            <td class="space-x-1 border px-2 py-1 text-center">
+                                <Button size="sm" variant="outline" @click="filterItemId = item.id" aria-description="dialog-description"
+                                    >Edit
+                                </Button>
+                                <Button size="sm" variant="destructive" @click="deleteItemId = item.id">Delete</Button>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -176,9 +181,8 @@ const floatRangeName = (id: number | null) => {
                             loadItems();
                         }
                     "
-                >Prev
-                </Button
-                >
+                    >Prev
+                </Button>
                 <span>Page {{ currentPage }} / {{ totalPages }}</span>
                 <Button
                     size="sm"
@@ -190,9 +194,8 @@ const floatRangeName = (id: number | null) => {
                             loadItems();
                         }
                     "
-                >Next
-                </Button
-                >
+                    >Next
+                </Button>
             </div>
         </div>
         <FiltersEditor
