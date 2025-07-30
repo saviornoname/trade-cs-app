@@ -24,6 +24,11 @@ const mainNavItems: NavItem[] = [
         href: '/dashboard/watchlist',
         icon: List,
     },
+    {
+        title: 'Inventory',
+        href: '/dashboard/inventory',
+        icon: List,
+    },
 ];
 
 const footerNavItems: NavItem[] = [
